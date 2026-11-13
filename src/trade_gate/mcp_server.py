@@ -56,7 +56,7 @@ def build_mcp(gate: TradeGate) -> MCPServer:
     @mcp.tool()
     def search_products(ctx: Context, query: str, diets: list[str] | None = None,
                         avoid_allergens: list[str] | None = None, require_allergen_data: bool = False,
-                        labels: list[str] | None = None, unit: str | None = None, limit: int = 15) -> dict[str, Any]:
+                        labels: list[str] | None = None, unit: str | None = None, limit: int = 25) -> dict[str, Any]:
         """Search Valio Aimo's catalog (English or Finnish words). Static data only, no prices.
         diets: lactose_free | gluten_free | vegan | vegetarian. avoid_allergens: names like 'milk',
         'peanuts', 'tree nuts', 'gluten', 'sesame'. unit: 'l' or 'kg' to keep only products measured so.
@@ -66,7 +66,7 @@ def build_mcp(gate: TradeGate) -> MCPServer:
             res = gate.search(m.buyer_id, m.agent_id, query=query, diets=diets or [],
                               avoid_allergens=(avoid_allergens or []) + m.dietary.avoid_allergens,
                               require_allergen_data=require_allergen_data, labels=labels or [],
-                              content_dim=unit, limit=min(limit, 40))
+                              content_dim=unit, limit=min(limit, 60))
             keep = ("id", "name", "brand", "sales_unit", "content_per_sales_unit", "content_dim", "claims",
                     "sustainability_labels", "allergens_contains", "allergens_may_contain", "allergen_status",
                     "delivery_reliability", "allowed_lot_size", "substitutes")

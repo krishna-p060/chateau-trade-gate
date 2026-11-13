@@ -104,6 +104,21 @@ def _query_words(text: str) -> list[str]:
     return [w for w in words if len(w) > 1]
 
 
+# Words that turn a product into a different product type ("milk" vs "milk chocolate drink").
+# A name containing one the buyer did not ask for ranks lower.
+_TYPE_MODIFIERS = {"coffee", "kahvi", "latte", "cappuccino", "mocca", "mocha", "espresso", "chocolate", "suklaa",
+                   "cocoa", "kaakao", "vanilla", "vanilja", "sour", "piimä", "condensed", "powder", "jauhe",
+                   "ice", "jäätelö", "quark", "rahka", "yoghurt", "yogurt", "jogurtti", "cheese", "juusto",
+                   "flavor", "flavour", "mint", "strawberry", "smoothie", "protein", "shake", "dessert",
+                   "pudding", "vanukas", "sauce", "kastike", "soup", "keitto", "bar", "candy", "snack",
+                   "cake", "kakku", "pie", "piirakka", "mix", "seos", "spread", "levite"}
+
+
+def _type_penalty(words: list[str], name: str) -> int:
+    toks = set(re.findall(r"[\wåäöÅÄÖ]+", name.lower()))
+    return len((toks & _TYPE_MODIFIERS) - set(words))
+
+
 def _name_hits(words: list[str], name: str) -> int:
     n = name.lower()
     return sum(1 for w in words if any(a in n for a in _SYNONYMS.get(w, [w])))
@@ -171,7 +186,8 @@ class Catalog:
 
         words = _query_words(query) if query else []
         if words:  # products whose NAME carries the query words beat ingredient-only matches
-            rows = sorted(rows, key=lambda r: (-_name_hits(words, f"{r['name_en']} {r['name_fi']}"), r["score"]))
+            rows = sorted(rows, key=lambda r: (-_name_hits(words, f"{r['name_en']} {r['name_fi']}"),
+                                               _type_penalty(words, f"{r['name_en']} {r['name_fi']}"), r["score"]))
 
         out: list[Product] = []
         for r in rows:

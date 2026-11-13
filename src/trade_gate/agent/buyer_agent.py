@@ -186,7 +186,7 @@ def _print_event(e: dict) -> None:
         print(f"  → {e['tool']}({json.dumps(e['input'], ensure_ascii=False)[:160]})")
     elif k == "agent.tool_result":
         print(f"    {'✓' if e['ok'] else '✗'} {e['preview'][:200]}")
-    elif k in ("agent.say", "agent.done"):
+    elif k == "agent.say":
         print(f"\n{e.get('text', '')}\n")
     elif k == "agent.thinking":
         print(f"  (thinking) {e['text'][:200]}")
