@@ -46,8 +46,9 @@ SCENARIOS = [
         "request": "Unexpected booking: a 80-person dinner tomorrow evening. We need 12 kg of salmon "
                    "fillet, 10 litres of cooking cream and 15 kg of potatoes. Flag anything that "
                    "cannot arrive in time and propose alternatives.",
-        "brief": "Tight deadline: cut-offs and lead times decide what is possible.",
-        "expect": {},
+        "brief": "Tight deadline: nothing can arrive on Sunday, so a correct agent orders nothing "
+                 "and says why, with alternatives.",
+        "expect": {"no_order": True},
     },
 ]
 

@@ -145,7 +145,7 @@ def my_mandate(a=Depends(agent)):
 def search(body: SearchIn, a=Depends(agent)):
     m, _ = a
     return gate.search(m.buyer_id, m.agent_id, query=body.query, diets=body.diets,
-                       avoid_allergens=body.avoid_allergens + m.dietary.avoid_allergens,
+                       avoid_allergens=list(dict.fromkeys(body.avoid_allergens + m.dietary.avoid_allergens)),
                        require_allergen_data=body.require_allergen_data, labels=body.labels,
                        content_dim=body.unit, limit=body.limit)
 
@@ -165,7 +165,7 @@ def offers(body: OffersIn, a=Depends(agent)):
 def make_plan(body: NeedIn, a=Depends(agent)):
     m, _ = a
     need = Need(**body.model_dump())
-    need.avoid_allergens += m.dietary.avoid_allergens
+    need.avoid_allergens = list(dict.fromkeys(need.avoid_allergens + m.dietary.avoid_allergens))
     need.require_allergen_data = need.require_allergen_data or m.dietary.require_allergen_data
     return gate.plan(m.buyer_id, m.agent_id, need)
 

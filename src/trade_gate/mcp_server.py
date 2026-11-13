@@ -64,7 +64,7 @@ def build_mcp(gate: TradeGate) -> MCPServer:
         def run():
             m, _ = who(ctx)
             res = gate.search(m.buyer_id, m.agent_id, query=query, diets=diets or [],
-                              avoid_allergens=(avoid_allergens or []) + m.dietary.avoid_allergens,
+                              avoid_allergens=list(dict.fromkeys((avoid_allergens or []) + m.dietary.avoid_allergens)),
                               require_allergen_data=require_allergen_data, labels=labels or [],
                               content_dim=unit, limit=min(limit, 60))
             keep = ("id", "name", "brand", "sales_unit", "content_per_sales_unit", "content_dim", "claims",
@@ -106,7 +106,7 @@ def build_mcp(gate: TradeGate) -> MCPServer:
         def run():
             m, _ = who(ctx)
             need = Need(query=query, quantity=quantity, unit=unit, deliver_by=date.fromisoformat(deliver_by),
-                        diets=diets or [], avoid_allergens=(avoid_allergens or []) + m.dietary.avoid_allergens,
+                        diets=diets or [], avoid_allergens=list(dict.fromkeys((avoid_allergens or []) + m.dietary.avoid_allergens)),
                         require_allergen_data=require_allergen_data or m.dietary.require_allergen_data,
                         preferred_labels=preferred_labels or [], product_ids=product_ids or [])
             if product_ids:
