@@ -32,6 +32,7 @@ from trade_gate.config import AGENT_MODEL, TIMEZONE
 from trade_gate.engine.offers import TZ, build_offer
 from trade_gate.seed import load_mandate
 from trade_gate.service import GateError, TradeGate, _candidate
+from trade_gate.shop.i18n import LANGS, LANGUAGE_RULE, day, eur, t
 
 log = logging.getLogger("trade_gate.shop")
 GATE_TOOLS = {"find_products", "check_offers", "get_product"}  # context is loaded by the app itself
@@ -87,7 +88,7 @@ Rules: never invent products, prices or stock; use only tool results. Call a pro
 when its candidate has usual=true. Allergen rules are absolute. If
 something cannot arrive in time, say so and offer the closest alternative. Valio Aimo calls recurring
 orders "order templates". Do not write text outside the tools unless you are answering a question.
-Write in the customer's language (English unless they write Finnish)."""
+Language: {language_rule}"""
 
 UI_TOOLS = [
     {
@@ -190,6 +191,8 @@ class Session:
     plan: dict | None = None
     ctx_loaded: bool = False
     system: str | None = None
+    lang: str = "en"
+    lang_note: str = ""
     llm: list[dict] = field(default_factory=list)
     pending: dict | None = None  # {"kind": "question"|"plan", "tool_use_id": ..., "other_results": [...]}
     listeners: set = field(default_factory=set)
@@ -198,7 +201,7 @@ class Session:
     def snapshot(self) -> dict:
         step = ("order" if self.order else "products" if self.cart
                 else "ingredients" if self.plan else "request")
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status, "step": step,
+        return {"id": self.id, "customer_id": self.customer_id, "lang": self.lang, "status": self.status, "step": step,
                 "busy": self.status in ("working", "ordering"), "messages": self.messages,
                 "question": self.question, "plan": self.plan, "cart": self.cart, "order": self.order}
 
@@ -209,14 +212,37 @@ class Shop:
         self.sessions: dict[str, Session] = {}
 
     # ------------------------------------------------------------------ session plumbing
-    def create(self, customer_id: str) -> Session:
+    def create(self, customer_id: str, lang: str = "en") -> Session:
         b = self.gate.buyer(customer_id)
-        s = Session(id=f"s_{uuid.uuid4().hex[:10]}", customer_id=b["id"])
+        s = Session(id=f"s_{uuid.uuid4().hex[:10]}", customer_id=b["id"], lang=lang if lang in LANGS else "en")
         contact = b["profile"].get("contact") or {}
-        self._msg(s, "assistant", f"Hi {contact.get('name', '').split(' ')[0] or 'there'}! Tell me what you're "
-                  f"cooking, or give me a shopping list. You approve every step before anything is ordered.", notify=False)
+        self._msg(s, "assistant", t(s.lang, "greeting", name=contact.get("name", "").split(" ")[0] or ""),
+                  notify=False)
         self.sessions[s.id] = s
         return s
+
+    def set_lang(self, sid: str, lang: str) -> Session:
+        """Switch the conversation language; the assistant writes in it from its next turn on."""
+        s = self.get(sid)
+        lang = lang if lang in LANGS else "en"
+        if lang != s.lang:
+            s.lang = lang
+            if s.llm:
+                s.lang_note = ("[The customer switched the webshop to "
+                               + ("Finnish. From now on: " if lang == "fi" else "English. From now on: ")
+                               + LANGUAGE_RULE[lang] + "]\n")
+            if s.cart:
+                s.cart["lang"] = lang
+                self._totals(s.cart)
+            if len(s.messages) == 1 and s.messages[0]["role"] == "assistant":  # untouched: re-greet
+                contact = self.gate.buyer(s.customer_id)["profile"].get("contact") or {}
+                s.messages[0]["text"] = t(lang, "greeting", name=contact.get("name", "").split(" ")[0] or "")
+            self._notify(s)
+        return s
+
+    def _note(self, s: Session) -> str:
+        n, s.lang_note = s.lang_note, ""
+        return n
 
     def get(self, sid: str) -> Session:
         if sid not in self.sessions:
@@ -237,7 +263,7 @@ class Shop:
 
     def _start(self, s: Session, coro) -> None:
         if s.status in ("working", "ordering"):
-            raise GateError("BUSY", "The assistant is still working on your previous message.", 409)
+            raise GateError("BUSY", t(s.lang, "busy"), 409)
         s.status = "working"
         self._notify(s)
 
@@ -249,7 +275,7 @@ class Shop:
                 while isinstance(root, BaseExceptionGroup) and root.exceptions:
                     root = root.exceptions[0]
                 log.exception("assistant run failed in session %s", s.id, exc_info=root)
-                self._msg(s, "error", f"Something went wrong: {type(root).__name__}: {str(root)[:300]}",
+                self._msg(s, "error", t(s.lang, "went_wrong", err=f"{type(root).__name__}: {str(root)[:300]}"),
                           notify=False)
                 s.status = "cart" if s.cart else "idle"
             self._notify(s)
@@ -267,7 +293,7 @@ class Shop:
     def _resume(self, s: Session, result: str) -> None:
         """Hand the customer's on-screen answer back to the model as the paused tool's result."""
         results = s.pending["other_results"] + [{"type": "tool_result", "tool_use_id": s.pending["tool_use_id"],
-                                                 "content": result}]
+                                                 "content": self._note(s) + result}]
         s.pending, s.question = None, None
         s.llm.append({"role": "user", "content": results})
         self._start(s, self._run(s))
@@ -276,9 +302,9 @@ class Shop:
         s = self.get(sid)
         text = text.strip()
         if not text:
-            raise GateError("EMPTY", "Message is empty.")
+            raise GateError("EMPTY", t(s.lang, "empty"))
         if s.status in ("working", "ordering"):
-            raise GateError("BUSY", "The assistant is still working on your previous message.", 409)
+            raise GateError("BUSY", t(s.lang, "busy"), 409)
         self._msg(s, "user", text, notify=False)
         if s.pending and s.pending["kind"] == "plan":
             s.plan["status"] = "revising"
@@ -291,18 +317,18 @@ class Shop:
             if s.order and s.order.get("status") in ("CONFIRMED", "PENDING_APPROVAL"):
                 prefix = "(The previous cart was already ordered; this is a new request.) "
                 s.cart, s.order, s.plan = None, None, None
-            self._user_turn(s, prefix + text)
+            self._user_turn(s, self._note(s) + prefix + text)
             self._start(s, self._run(s))
         return s
 
     def answer(self, sid: str, answers: dict[str, str]) -> Session:
         s = self.get(sid)
         if not s.pending or s.pending["kind"] != "question" or not s.question:
-            raise GateError("NO_QUESTION", "There is no open question.", 409)
+            raise GateError("NO_QUESTION", t(s.lang, "no_question"), 409)
         qs = s.question["questions"]
         missing = [q["text"] for q in qs if not (answers.get(q["id"]) or "").strip()]
         if missing:
-            raise GateError("ANSWER_ALL", "Please answer: " + "; ".join(missing), 409)
+            raise GateError("ANSWER_ALL", t(s.lang, "answer_all", missing="; ".join(missing)), 409)
         self._msg(s, "user", " · ".join(answers[q["id"]].strip() for q in qs), notify=False)
         self._resume(s, "Customer answered:\n" + "\n".join(f"- {q['text']} -> {answers[q['id']].strip()}" for q in qs))
         return s
@@ -310,7 +336,7 @@ class Shop:
     def approve_plan(self, sid: str, items: list[dict], save_recipes: list[str] | None = None) -> Session:
         s = self.get(sid)
         if not s.pending or s.pending["kind"] != "plan" or not s.plan:
-            raise GateError("NO_PLAN", "There is no ingredient list waiting for approval.", 409)
+            raise GateError("NO_PLAN", t(s.lang, "no_plan"), 409)
         b = self.gate.buyer(s.customer_id)
         who = (b["profile"].get("contact") or {}).get("name", "Customer")
         before = {it["key"]: it for it in s.plan["items"]}
@@ -336,7 +362,7 @@ class Shop:
                 final[-1]["edited"] = True
         changes += [f"removed {it['name']}" for k, it in before.items() if k not in seen]
         if not final:
-            raise GateError("EMPTY_PLAN", "The list is empty.", 409)
+            raise GateError("EMPTY_PLAN", t(s.lang, "empty_plan"), 409)
         s.plan.update(items=final, status="approved", changes=changes)
         self.gate.audit.append(
             buyer_id=s.customer_id, actor=f"human:{who}", event="plan.approved",
@@ -352,10 +378,12 @@ class Shop:
                     self.gate.add_recipe(s.customer_id, d["name"], d["portions"], ing, by=who)
                     d["saved"] = True
                     saved.append(d["name"])
-        self._msg(s, "user", "Ingredients approved" + (f" ({len(changes)} change{'s' if len(changes) != 1 else ''})"
-                                                       if changes else ""), notify=False)
+        n = len(changes)
+        plural = ("s" if n != 1 else "") if s.lang == "en" else ("ta" if n != 1 else "")
+        self._msg(s, "user", t(s.lang, "plan_approved") + (t(s.lang, "plan_changes", n=n, s=plural) if n else ""),
+                  notify=False)
         if saved:
-            self._msg(s, "progress", "Saved as your recipe: " + ", ".join(saved), notify=False)
+            self._msg(s, "progress", t(s.lang, "recipe_saved", names=", ".join(saved)), notify=False)
         self._resume(s, json.dumps({
             "approved": True, "by": who, "changes": changes,
             "items": [{k: it[k] for k in ("key", "name", "quantity", "unit", "dish")} for it in final],
@@ -385,7 +413,7 @@ class Shop:
     def set_reference(self, sid: str, reference: str) -> Session:
         s = self.get(sid)
         if not s.cart:
-            raise GateError("NO_CART", "There is no cart yet.", 409)
+            raise GateError("NO_CART", t(s.lang, "no_cart"), 409)
         s.cart["reference"] = reference.strip()[:80]
         self._notify(s)
         return s
@@ -393,7 +421,7 @@ class Shop:
     def save_template(self, sid: str, name: str) -> Session:
         s = self.get(sid)
         if not s.cart or not s.cart["lines"]:
-            raise GateError("NO_CART", "There is nothing to save.", 409)
+            raise GateError("NO_CART", t(s.lang, "nothing_to_order"), 409)
         b = self.gate.buyer(s.customer_id)
         who = (b["profile"].get("contact") or {}).get("name", "Customer")
         lines = [{"product_id": ln["options"][ln["selected"]]["product_id"],
@@ -401,8 +429,7 @@ class Shop:
         wd = [WEEKDAYS[date.fromisoformat(s.cart["deliver_by"]).weekday()]]
         tpl = self.gate.add_order_template(s.customer_id, name or s.cart["title"], lines, wd, by=who)
         s.cart["saved_template"] = tpl["name"]
-        self._msg(s, "notice", f"Saved as order template “{tpl['name']}” ({len(lines)} products). "
-                  f"You'll find it under your order templates.", notify=False)
+        self._msg(s, "notice", t(s.lang, "template_saved", name=tpl["name"], n=len(lines)), notify=False)
         self._notify(s)
         return s
 
@@ -421,7 +448,7 @@ class Shop:
 
     def _line(self, s: Session, key: str) -> dict:
         if not s.cart:
-            raise GateError("NO_CART", "There is no cart yet.", 409)
+            raise GateError("NO_CART", t(s.lang, "no_cart"), 409)
         for ln in s.cart["lines"]:
             if ln["key"] == key:
                 return ln
@@ -430,29 +457,30 @@ class Shop:
     async def confirm(self, sid: str) -> Session:
         s = self.get(sid)
         if not s.cart or not s.cart["lines"]:
-            raise GateError("NO_CART", "There is nothing to order.", 409)
+            raise GateError("NO_CART", t(s.lang, "nothing_to_order"), 409)
         if s.status in ("working", "ordering"):
-            raise GateError("BUSY", "Please wait a moment.", 409)
+            raise GateError("BUSY", t(s.lang, "wait"), 409)
         undecided = [ln["need"] for ln in s.cart["lines"] if ln.get("decision_needed")]
         if undecided:
-            raise GateError("CHOICE_NEEDED", "Please choose a product for: " + ", ".join(undecided), 409)
+            raise GateError("CHOICE_NEEDED", t(s.lang, "choice_needed", lines=", ".join(undecided)), 409)
         s.status = "ordering"
         self._notify(s)
         try:
             order = await asyncio.to_thread(self._place, s)
         except GateError as e:
             s.status = "cart"
-            self._msg(s, "error", f"Valio could not take this order yet: {e.message}")
+            self._msg(s, "error", t(s.lang, "order_failed", msg=e.message))
             return s
         s.order = order
         s.status = "ordered"
         if order["status"] == "CONFIRMED":
-            text = (f"Order {order['order_id']} is confirmed — €{order['total']:,.2f} excl. VAT, delivery "
-                    f"{_day(order['delivery'])}. Valio has signed the confirmation.")
+            text = t(s.lang, "order_confirmed", id=order["order_id"], total=eur(order["total"], s.lang),
+                     day=day(order["delivery"], s.lang))
         elif order["status"] == "PENDING_APPROVAL":
-            text = (f"Sent to {order['approver'] or 'your approver'} for approval: " + " ".join(order["reasons"][:2]))
+            text = t(s.lang, "order_pending", who=order["approver"] or t(s.lang, "your_approver"),
+                     reasons=" ".join(order["reasons"][:2]))
         else:
-            text = "Valio could not accept this order: " + " ".join(order["reasons"][:2])
+            text = t(s.lang, "order_rejected", reasons=" ".join(order["reasons"][:2]))
         self._msg(s, "notice", text, notify=False, order_id=order["order_id"], status=order["status"])
         self._notify(s)
         return s
@@ -512,9 +540,9 @@ class Shop:
                 s.order.update(status=o["status"], signed=bool(o.get("confirmation_jws")),
                                approver=(o.get("approval") or {}).get("approver") or s.order.get("approver"),
                                note=(o.get("approval") or {}).get("note"))
-                verb = "approved" if o["status"] == "CONFIRMED" else "rejected"
-                self._msg(s, "notice", f"{s.order['approver']} {verb} order {o['id']}."
-                          + (f" Note: “{s.order['note']}”" if s.order.get("note") else ""),
+                verb = t(s.lang, "approved_verb" if o["status"] == "CONFIRMED" else "rejected_verb")
+                self._msg(s, "notice", t(s.lang, "approval_decided", who=s.order["approver"], verb=verb, id=o["id"])
+                          + (t(s.lang, "approver_note", note=s.order["note"]) if s.order.get("note") else ""),
                           order_id=o["id"], status=o["status"])
 
     # ------------------------------------------------------------------ standing order check
@@ -524,7 +552,7 @@ class Shop:
         so = next((x for x in b["profile"].get("standing_orders", []) if x["id"] == so_id), None)
         if not so:
             raise GateError("UNKNOWN_STANDING_ORDER", f"No standing order {so_id}.", 404)
-        self._msg(s, "user", f"Check my order template “{so['name']}” for the next delivery.", notify=False)
+        self._msg(s, "user", t(s.lang, "check_template", name=so["name"]), notify=False)
         s.cart, s.order, s.plan = None, None, None
         self._start(s, self._run_standing(s, b, so))
         return s
@@ -550,24 +578,23 @@ class Shop:
             else:
                 why = ln.get("problem") or ((opt or {}).get("notes") or ["not available"])[0]
                 bad.append((ln, src, name, why))
-        self._msg(s, "progress", f"Checked {len(lines)} order-template items for {_day(d.isoformat())}: "
-                  f"{len(ok)} available, {len(bad)} with problems.", notify=False)
+        self._msg(s, "progress", t(s.lang, "template_checked", n=len(lines), day=day(d.isoformat(), s.lang),
+                                    ok=len(ok), bad=len(bad)), notify=False)
         auto = (b["profile"].get("settings") or {}).get("auto_confirm_standing_orders")
         if not bad:
-            s.cart = self._cart_from(f"{so['name']} — {_day(d.isoformat())}", d, ok, [],
-                                     customer_id=s.customer_id)
+            s.cart = self._cart_from(f"{so['name']} — {day(d.isoformat(), s.lang)}", d, ok, [],
+                                     customer_id=s.customer_id, lang=s.lang)
             if auto:
                 s.status = "ordering"
                 self._notify(s)
                 s.order = await asyncio.to_thread(self._place, s, True)
                 s.status = "ordered"
-                self._msg(s, "notice", f"Everything in “{so['name']}” is available, so I confirmed it automatically "
-                          f"as your settings allow: €{s.order['total']:,.2f}, delivery {_day(d.isoformat())}.",
+                self._msg(s, "notice", t(s.lang, "template_auto", name=so["name"], total=eur(s.order["total"], s.lang),
+                                          day=day(d.isoformat(), s.lang)),
                           notify=False, order_id=s.order["order_id"], status=s.order["status"])
             else:
                 s.status = "cart"
-                self._msg(s, "assistant", "Everything is available. Review the cart and confirm when ready.",
-                          notify=False)
+                self._msg(s, "assistant", t(s.lang, "template_ok"), notify=False)
             return
         problems = "\n".join(
             f"- key so{lines.index(ln)}: {name} (product {src['product_id']}), usual {src['units']:g} "
@@ -577,7 +604,7 @@ class Shop:
         keep = "\n".join(f"- key {ln['key']}: {ln['need']} — {ln['options'][0]['units']:g} "
                          f"{ln['options'][0]['sales_unit']} (product {ln['options'][0]['product_id']}) OK"
                          for ln in ok)
-        self._user_turn(s, (
+        self._user_turn(s, self._note(s) + (
                       f"[Order template check by Valio for delivery {d.isoformat()} — '{so['name']}']\n"
                       f"Available:\n{keep}\nProblems:\n{problems}\n\n"
                       f"Find substitutes for the problem items (find_products with replaces=<product_id>, "
@@ -625,8 +652,8 @@ class Shop:
         return out
 
     def _cart_from(self, title: str, deliver_by: date, lines: list[dict], assumptions: list[str],
-                   portions: int | None = None, customer_id: str | None = None) -> dict:
-        cart = {"customer_id": customer_id, "title": title, "deliver_by": deliver_by.isoformat(), "assumptions": assumptions[:4],
+                   portions: int | None = None, customer_id: str | None = None, lang: str = "en") -> dict:
+        cart = {"customer_id": customer_id, "lang": lang, "title": title, "deliver_by": deliver_by.isoformat(), "assumptions": assumptions[:4],
                 "lines": lines, "portions": portions or None, "reference": "",
                 "updated": _now().isoformat(timespec="seconds")}
         self._totals(cart)
@@ -636,18 +663,19 @@ class Shop:
         """Guardrails shown before the customer confirms (the gate enforces them again on the order)."""
         if not cart.get("customer_id"):
             return []
+        lang = cart.get("lang", "en")
         m = self.gate.buyer(cart["customer_id"])["mandate"] or {}
         lim, diet = m.get("limits") or {}, m.get("dietary") or {}
-        approver = (m.get("approvers") or ["your approver"])[0].split(" (")[0]
+        approver = (m.get("approvers") or [t(lang, "your_approver")])[0].split(" (")[0]
         sel = [ln["options"][ln["selected"]] for ln in cart["lines"] if ln["options"]]
         total, out = cart["totals"]["total"], []
         auto, hard = lim.get("auto_approve_max_order_eur"), lim.get("hard_max_order_eur")
         if hard and total > hard:
-            out.append({"id": "spend", "level": "block", "label": f"Above the €{hard:,.0f} maximum for one order"})
+            out.append({"id": "spend", "level": "block", "label": t(lang, "chk_hard", amount=eur(hard, lang, 0))})
         elif auto and total > auto:
-            out.append({"id": "spend", "level": "warn", "label": f"Above your €{auto:,.0f} limit: {approver} approves"})
+            out.append({"id": "spend", "level": "warn", "label": t(lang, "chk_over", amount=eur(auto, lang, 0), who=approver)})
         elif auto:
-            out.append({"id": "spend", "level": "ok", "label": f"Within your €{auto:,.0f} order limit"})
+            out.append({"id": "spend", "level": "ok", "label": t(lang, "chk_within", amount=eur(auto, lang, 0))})
         avoid = diet.get("avoid_allergens") or []
         if avoid:
             codes: set[str] = set()
@@ -663,19 +691,18 @@ class Shop:
                 elif p and not p.has_allergen_data:
                     nodata += 1
             if bad:
-                out.append({"id": "allergens", "level": "block",
-                            "label": f"{bad} product{'s' if bad > 1 else ''} conflict with your allergen rules"})
+                out.append({"id": "allergens", "level": "block", "label": t(lang, "chk_allergen_bad", n=bad)})
             elif nodata and diet.get("require_allergen_data"):
                 out.append({"id": "allergens", "level": "warn",
-                            "label": f"{nodata} without allergen data: {approver} approves"})
+                            "label": t(lang, "chk_allergen_nodata", n=nodata, who=approver)})
             else:
-                out.append({"id": "allergens", "level": "ok", "label": "Allergen rules met: no " + ", ".join(avoid)})
+                out.append({"id": "allergens", "level": "ok", "label": t(lang, "chk_allergen_ok", list=", ".join(avoid))})
         late = cart["totals"]["late"]
         if late:
             out.append({"id": "delivery", "level": "warn",
-                        "label": f"{late} item{'s' if late > 1 else ''} arrive after {_day(cart['deliver_by'])}"})
+                        "label": t(lang, "chk_late", n=late, day=day(cart["deliver_by"], lang))})
         else:
-            out.append({"id": "delivery", "level": "ok", "label": f"Everything arrives by {_day(cart['deliver_by'])}"})
+            out.append({"id": "delivery", "level": "ok", "label": t(lang, "chk_on_time", day=day(cart["deliver_by"], lang))})
         return out
 
     def _totals(self, cart: dict) -> None:
@@ -706,7 +733,8 @@ class Shop:
             today = _now()
             s.system = SYSTEM.format(today=f"{today:%A %d %B %Y} ({TIMEZONE})",
                                      contact=contact.get("name", "the customer"),
-                                     role=contact.get("role", "buyer"), customer=b["name"])
+                                     role=contact.get("role", "buyer"), customer=b["name"],
+                                     language_rule=LANGUAGE_RULE[s.lang])
         system = s.system
         client = anthropic.AsyncAnthropic()
         http = create_mcp_http_client(headers={"Authorization": f"Bearer {load_mandate(s.customer_id, self.gate.state_dir)}"})
@@ -749,14 +777,14 @@ class Shop:
                         results.append({"type": "tool_result", "tool_use_id": bl.id, "content": content})
                         if (bl.name == "show_cart" and '"shown": true' in content and s.cart
                                 and all(ln["options"] for ln in s.cart["lines"])):
-                            cart_msg = (bl.input.get("message") or "").strip() or "Your cart is ready to review."
+                            cart_msg = (bl.input.get("message") or "").strip() or t(s.lang, "cart_ready")
                     if pause is not None and pause.name == "ask_customer":
                         raw = pause.input.get("questions") or []
                         qs = [{"id": str(q.get("id") or f"q{n + 1}"), "text": str(q.get("question", "")),
                                "options": [str(o) for o in (q.get("options") or [])][:4]}
                               for n, q in enumerate(raw[:3]) if q.get("question")]
                         s.question = {"questions": qs}
-                        self._msg(s, "question", qs[0]["text"] if len(qs) == 1 else "A few quick questions",
+                        self._msg(s, "question", qs[0]["text"] if len(qs) == 1 else t(s.lang, "several_questions"),
                                   notify=False, questions=qs, options=qs[0]["options"] if qs else [])
                         s.pending = {"kind": "question", "tool_use_id": pause.id, "other_results": results}
                         s.status = "waiting"
@@ -772,8 +800,7 @@ class Shop:
                         s.status = "cart"
                         return
                     self._notify(s)
-                self._msg(s, "error", "I couldn't finish this request in a reasonable number of steps.",
-                          notify=False)
+                self._msg(s, "error", t(s.lang, "too_many_steps"), notify=False)
                 s.status = "cart" if s.cart else "idle"
 
     def _propose(self, s: Session, args: dict) -> None:
@@ -802,13 +829,11 @@ class Shop:
         from_recipe = [d["recipe_name"] for d in dishes if d["source"] == "recipe"]
         est = [d["name"] for d in dishes if d["source"] == "estimate"]
         how = " · ".join(x for x in (
-            ("from your saved recipe" + ("s" if len(from_recipe) > 1 else "") + " " + ", ".join(from_recipe))
-            if from_recipe else "",
-            ("my estimate for " + ", ".join(est)) if est else "") if x)
-        self._msg(s, "progress", f"Drafted {len(items)} ingredients ({how})" if how
-                  else f"Drafted {len(items)} ingredients", notify=False)
-        self._msg(s, "assistant", (args.get("message") or "").strip()
-                  or "Check the quantities, change anything, then I'll find the products.", notify=False)
+            t(s.lang, "from_recipe", names=", ".join(from_recipe)) if from_recipe else "",
+            t(s.lang, "estimate_for", names=", ".join(est)) if est else "") if x)
+        drafted = t(s.lang, "drafted", n=len(items))
+        self._msg(s, "progress", f"{drafted} ({how})" if how else drafted, notify=False)
+        self._msg(s, "assistant", (args.get("message") or "").strip() or t(s.lang, "check_list"), notify=False)
 
     async def _tool(self, s: Session, mcp: ClientSession, name: str, args: dict) -> str:
         if name == "show_cart":
@@ -819,10 +844,9 @@ class Shop:
             lines = await asyncio.to_thread(self._price_lines, s.customer_id, args.get("lines") or [], d)
             ref = (s.cart or {}).get("reference", "")
             s.cart = self._cart_from(args.get("title", "Your cart"), d, lines, args.get("assumptions") or [],
-                                     portions=args.get("portions"), customer_id=s.customer_id)
+                                     portions=args.get("portions"), customer_id=s.customer_id, lang=s.lang)
             s.cart["reference"] = ref
-            self._msg(s, "progress", f"Built the cart: {len(lines)} lines, prices and stock checked live",
-                      notify=False)
+            self._msg(s, "progress", t(s.lang, "built_cart", n=len(lines)), notify=False)
             self._notify(s)
             summary = [{"key": ln["key"], "need": ln["need"],
                         "options": [{"product_id": o["product_id"], "name": o["name"], "units": o["units"],
@@ -830,9 +854,8 @@ class Shop:
                                     for o in ln["options"]],
                         **({"problem": ln["problem"]} if ln["problem"] else {})} for ln in lines]
             return json.dumps({"shown": True, "totals": s.cart["totals"], "lines": summary}, ensure_ascii=False)
-        label = {"get_customer_context": "Read your profile, order history and saved recipes",
-                 "find_products": "Searching Valio Aimo's catalog", "check_offers": "Checking live price and stock",
-                 "get_product": "Reading product details"}.get(name, name)
+        label = t(s.lang, {"get_customer_context": "tool_context", "find_products": "tool_find",
+                           "check_offers": "tool_offers"}.get(name, "tool_product"))
         prog = self._msg(s, "progress", label + "…", notify=True)
         try:
             out = await mcp.call_tool(name, args)
@@ -842,16 +865,15 @@ class Shop:
         if name == "find_products":
             try:
                 sm = json.loads(text)["summary"]
-                prog["text"] = (f"Searched {sm['catalog_size']:,} products → {sm['checked_live']} checked "
-                                f"live → {sm['shortlisted']} candidates")
+                cat = f"{sm['catalog_size']:,}".replace(",", " " if s.lang == "fi" else ",")
+                prog["text"] = t(s.lang, "funnel", catalog=cat, live=sm["checked_live"], short=sm["shortlisted"])
                 prog["funnel"] = sm
             except (KeyError, ValueError, TypeError):
                 prog["text"] = label
         elif name == "get_customer_context":
             try:
                 c = json.loads(text)
-                prog["text"] = (f"Read your profile: {len(c['saved_recipes'])} recipes, "
-                                f"{len(c['usual_products'])} usual products")
+                prog["text"] = t(s.lang, "read_profile", recipes=len(c["saved_recipes"]), usual=len(c["usual_products"]))
             except (KeyError, ValueError, TypeError):
                 prog["text"] = label
         else:

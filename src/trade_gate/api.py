@@ -325,7 +325,7 @@ shop = Shop(gate)
 
 
 @app.get("/api/shop/customers", tags=["shop"])
-def s_customers():
+def s_customers(lang: str = "en"):
     out = []
     for b in gate.buyers():
         ctx = gate.customer_context(b["id"])
@@ -336,7 +336,7 @@ def s_customers():
                     "approvers": m.get("approvers", []),
                     "standing_orders": ctx["standing_orders"], "recipes": ctx["saved_recipes"],
                     "usual_products": ctx["usual_products"][:12],
-                    "suggestions": _SUGGESTIONS.get(b["id"], [])})
+                    "suggestions": (_SUGGESTIONS_FI if lang == "fi" else _SUGGESTIONS).get(b["id"], [])})
     return out
 
 
@@ -354,8 +354,27 @@ _SUGGESTIONS = {
 }
 
 
+_SUGGESTIONS_FI = {
+    "kultakeittio-catering": [
+        "Pastaa pestolla 40 hengelle perjantaina",
+        "Pizza margheritaa 50 hengelle lauantaina",
+        "5 kg sipulia, 2 kg pennepastaa ja 10 l ruokakermaa tiistaiksi"],
+    "hotel-aurora": [
+        "Toast Skagen 150 konferenssivieraalle keskiviikkona",
+        "Lohikeittoa 80 hengelle perjantaina"],
+    "espoo-childrens-hospital": [
+        "Kaurapuuroa 100 lapselle maanantaina",
+        "Välipala 120 lapselle maanantaina"],
+}
+
+
 class SessionIn(BaseModel):
     customer_id: str
+    lang: str = "en"
+
+
+class LangIn(BaseModel):
+    lang: str
 
 
 class MessageIn(BaseModel):
@@ -390,7 +409,12 @@ def _need_llm():
 
 @app.post("/api/shop/sessions", tags=["shop"])
 def s_new(body: SessionIn):
-    return shop.create(body.customer_id).snapshot()
+    return shop.create(body.customer_id, body.lang).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/lang", tags=["shop"])
+async def s_lang(sid: str, body: LangIn):
+    return shop.set_lang(sid, body.lang).snapshot()
 
 
 @app.get("/api/shop/sessions/{sid}", tags=["shop"])
@@ -504,11 +528,11 @@ async def s_stream(sid: str, request: Request):
 
 
 @app.put("/api/shop/customers/{cid}/settings", tags=["shop"])
-def s_settings(cid: str, body: SettingsIn):
+def s_settings(cid: str, body: SettingsIn, lang: str = "en"):
     b = gate.buyer(cid)
     who = (b["profile"].get("contact") or {}).get("name", "Customer")
     gate.update_settings(cid, body.model_dump(exclude_none=True), by=who)
-    return next(c for c in s_customers() if c["id"] == cid)
+    return next(c for c in s_customers(lang) if c["id"] == cid)
 
 
 @app.get("/api/shop/insights", tags=["valio"])

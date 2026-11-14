@@ -80,7 +80,7 @@ def _candidate(p, o, usual: dict | None, valio_sub: bool, deliver_by: date | Non
         co2 = round(p.co2_kg_per_kg * content * o.units_to_order, 1)
     planned = (deliver_by.isoformat() if deliver_by and o.meets_deadline else o.earliest_delivery)
     return {
-        "product_id": p.id, "name": p.name, "brand": p.brand, "pack": _pack(p, o),
+        "product_id": p.id, "name": p.name, "name_fi": p.name_fi or p.name, "brand": p.brand, "pack": _pack(p, o),
         "units": o.units_to_order, "sales_unit": p.sales_unit, "unit_price": o.unit_price,
         "total": o.total_price, "total_with_tax": o.total_price_with_tax,
         "order_by": None if o.cutoff_passed or not _parse_dt(o.closing_time)
@@ -98,6 +98,8 @@ def _candidate(p, o, usual: dict | None, valio_sub: bool, deliver_by: date | Non
         "stock_tracked": o.stock_status in ("confirmed", "partial"),
         "notes": [i.message for i in o.issues
                   if i.severity in ("warning", "blocking") and i.code != "STOCK_UNCONFIRMED"][:3],
+        "note_codes": [i.code for i in o.issues
+                       if i.severity in ("warning", "blocking") and i.code != "STOCK_UNCONFIRMED"][:3],
     }
 
 
@@ -507,7 +509,8 @@ class TradeGate:
         for r in rows:
             p = self.catalog.get(r["product_id"])
             if p:
-                out.append({"product_id": p.id, "name": p.name, "brand": p.brand, "pack": _pack(p),
+                out.append({"product_id": p.id, "name": p.name, "name_fi": p.name_fi or p.name, "brand": p.brand,
+                            "pack": _pack(p),
                             "times_bought": r["times"], "last_bought": r["last"],
                             "typical_units": round(r["avg_units"], 1), "sales_unit": p.sales_unit})
         return out
