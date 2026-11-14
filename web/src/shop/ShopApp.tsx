@@ -10,6 +10,7 @@ import { Preferences } from './Preferences'
 import type { Customer, PlanItemOut, Session } from './types'
 import { ValioView } from './ValioView'
 import { Workspace } from './Workspace'
+import { getLang, setLang as setLangGlobal, t, type Lang } from './i18n'
 
 type Tab = 'assistant' | 'approvals' | 'valio' | 'preferences'
 const TABS: Tab[] = ['assistant', 'approvals', 'valio', 'preferences']
@@ -30,7 +31,7 @@ function openSession(cid: string, fresh = false): Promise<Session> {
         if (!(e instanceof ApiError) || e.status !== 404) throw e
       }
     }
-    const s = await shop.create(cid)
+    const s = await shop.create(cid, getLang())
     localStorage.setItem(sidKey(cid), s.id)
     return s
   })().finally(() => inflight.delete(k))
@@ -46,15 +47,16 @@ export default function ShopApp() {
   const [sending, setSending] = useState(false)
   const [approvals, setApprovals] = useState<Approval[]>([])
   const [toasts, setToasts] = useState<ToastMsg[]>([])
+  const [lang, setLangState] = useState<Lang>(getLang)
   const sidRef = useRef<string | null>(null)
 
   const toast = useCallback((tone: ToastMsg['tone'], title: string, body?: string) => {
     const id = Date.now() + Math.random()
-    setToasts((t) => [...t, { id, tone, title, body }])
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), tone === 'error' ? 7000 : 4500)
+    setToasts((ts) => [...ts, { id, tone, title, body }])
+    window.setTimeout(() => setToasts((ts) => ts.filter((x) => x.id !== id)), tone === 'error' ? 7000 : 4500)
   }, [])
-  const fail = useCallback((e: unknown, title = 'Something went wrong') => {
-    toast('error', title, e instanceof Error ? e.message : String(e))
+  const fail = useCallback((e: unknown, title?: string) => {
+    toast('error', title || t('err_generic'), e instanceof Error ? e.message : String(e))
   }, [toast])
 
   useEffect(() => {
@@ -62,20 +64,20 @@ export default function ShopApp() {
   }, [tab])
   useEffect(() => {
     const h = () => {
-      const t = location.hash.slice(1) as Tab
-      setTab(TABS.includes(t) ? t : 'assistant')
+      const next = location.hash.slice(1) as Tab
+      setTab(TABS.includes(next) ? next : 'assistant')
     }
     window.addEventListener('hashchange', h)
     return () => window.removeEventListener('hashchange', h)
   }, [])
 
   // customers
-  const reloadCustomers = useCallback(() => shop.customers().then(setCustomers), [])
+  const reloadCustomers = useCallback(() => shop.customers(getLang()).then(setCustomers), [])
   useEffect(() => {
     let alive = true
-    const load = (n = 0) => shop.customers().then((c) => alive && setCustomers(c)).catch((e) => {
+    const load = (n = 0) => shop.customers(getLang()).then((c) => alive && setCustomers(c)).catch((e) => {
       if (n < 20) window.setTimeout(() => load(n + 1), 2000)
-      else fail(e, 'Could not load customers')
+      else fail(e, t('err_customers'))
     })
     load()
     return () => { alive = false }
@@ -101,7 +103,7 @@ export default function ShopApp() {
     }).catch((e) => {
       if (!alive) return
       if (n < 20) window.setTimeout(() => go(n + 1), 2000)
-      else fail(e, 'Could not start the assistant')
+      else fail(e, t('err_start'))
     })
     go()
     return () => { alive = false }
@@ -130,28 +132,28 @@ export default function ShopApp() {
   }
   const send = async (text: string) => {
     setSending(true)
-    await run((sid) => shop.send(sid, text), 'Could not send')
+    await run((sid) => shop.send(sid, text), t('err_send'))
     setSending(false)
   }
   const standing = async (id: string) => {
     setSending(true)
-    await run((sid) => shop.standingOrder(sid, id), 'Could not check the order template')
+    await run((sid) => shop.standingOrder(sid, id), t('err_template_check'))
     setSending(false)
   }
-  const select = async (key: string, i: number) => { await run((sid) => shop.select(sid, key, i), 'Could not change the option') }
-  const remove = async (key: string) => { await run((sid) => shop.remove(sid, key), 'Could not remove the line') }
+  const select = async (key: string, i: number) => { await run((sid) => shop.select(sid, key, i), t('err_option')) }
+  const remove = async (key: string) => { await run((sid) => shop.remove(sid, key), t('err_remove')) }
   const confirm = async () => {
-    const ok = await run((sid) => shop.confirm(sid), 'Order not placed')
+    const ok = await run((sid) => shop.confirm(sid), t('err_order'))
     if (ok) loadApprovals()
   }
-  const answers = async (a: Record<string, string>) => { await run((sid) => shop.answers(sid, a), 'Could not send your answer') }
+  const answers = async (a: Record<string, string>) => { await run((sid) => shop.answers(sid, a), t('err_answer')) }
   const approvePlan = async (items: PlanItemOut[], save: string[]) => {
-    await run((sid) => shop.approvePlan(sid, items, save), 'Could not approve the list')
+    await run((sid) => shop.approvePlan(sid, items, save), t('err_approve_list'))
   }
-  const setReference = async (r: string) => { await run((sid) => shop.reference(sid, r), 'Could not save your reference') }
-  const notify = async (key: string) => { await run((sid) => shop.notify(sid, key), 'Could not set the notification') }
+  const setReference = async (r: string) => { await run((sid) => shop.reference(sid, r), t('err_reference')) }
+  const notify = async (key: string) => { await run((sid) => shop.notify(sid, key), t('err_notify')) }
   const saveTemplate = async (name: string) => {
-    const ok = await run((sid) => shop.saveTemplate(sid, name), 'Could not save the order template')
+    const ok = await run((sid) => shop.saveTemplate(sid, name), t('err_template_save'))
     if (ok) reloadCustomers().catch(() => {})
   }
   const newConversation = async () => {
@@ -160,30 +162,46 @@ export default function ShopApp() {
       sidRef.current = s.id
       setSession(s)
     } catch (e) {
-      fail(e, 'Could not start a new conversation')
+      fail(e, t('err_new'))
     }
   }
   const decide = async (a: Approval, approver: string, approve: boolean, note: string) => {
     try {
       await shop.decide(a.id, approver, approve, note)
-      toast('success', approve ? 'Order approved' : 'Order rejected',
-        approve ? `${a.order_id} is confirmed and signed by Valio.` : `${a.order_id} will not be delivered.`)
+      toast('success', approve ? t('toast_approved') : t('toast_rejected'),
+        t(approve ? 'toast_approved_body' : 'toast_rejected_body', { id: a.order_id }))
       window.setTimeout(loadApprovals, 700)
       return true
     } catch (e) {
-      fail(e, 'Decision failed')
+      fail(e, t('err_decision'))
       return false
     }
   }
   const saveSettings = async (body: SettingsIn) => {
     try {
-      const c = await shop.saveSettings(activeCid, body)
+      const c = await shop.saveSettings(activeCid, body, getLang())
       setCustomers((cs) => cs.map((x) => (x.id === c.id ? { ...x, ...c } : x)))
-      toast('success', 'Saved — your purchasing mandate was re-signed ✓')
+      toast('success', t('toast_prefs_saved'))
       return true
     } catch (e) {
-      fail(e, 'Could not save')
+      fail(e, t('err_save'))
       return false
+    }
+  }
+
+  // language: UI strings switch at once; the open conversation and customer texts follow on the server
+  const switchLang = async (l: Lang) => {
+    if (l === lang) return
+    setLangGlobal(l)
+    setLangState(l)
+    reloadCustomers().catch(() => {})
+    const sid = sidRef.current
+    if (sid) {
+      try {
+        applySession(await shop.setLang(sid, l))
+      } catch (e) {
+        fail(e, t('err_lang'))
+      }
     }
   }
 
@@ -195,7 +213,8 @@ export default function ShopApp() {
 
   return (
     <div className="flex h-full flex-col bg-[#f5f7fb] text-slate-800">
-      <Header tab={tab} setTab={setTab} pending={approvals.length} customers={customers} customer={customer} onCustomer={setCid} />
+      <Header tab={tab} setTab={setTab} pending={approvals.length} customers={customers} customer={customer} onCustomer={setCid}
+        lang={lang} onLang={switchLang} />
       <main className="min-h-0 flex-1">
         {tab === 'assistant' && (
           <div className="grid h-full grid-cols-[38fr_62fr]">
@@ -216,31 +235,32 @@ export default function ShopApp() {
           <div className="h-full overflow-y-auto"><Preferences key={customer.id} customer={customer} onSave={saveSettings} /></div>
         )}
       </main>
-      <Toasts toasts={toasts} dismiss={(id) => setToasts((t) => t.filter((x) => x.id !== id))} />
+      <Toasts toasts={toasts} dismiss={(id) => setToasts((ts) => ts.filter((x) => x.id !== id))} />
     </div>
   )
 }
 
 // ------------------------------------------------------------------ header
-function Header({ tab, setTab, pending, customers, customer, onCustomer }: {
+function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, onLang }: {
   tab: Tab; setTab: (t: Tab) => void; pending: number
   customers: Customer[]; customer: Customer | null; onCustomer: (id: string) => void
+  lang: Lang; onLang: (l: Lang) => void
 }) {
   const items: { id: Tab; label: string; icon: typeof BarChart3 }[] = [
-    { id: 'assistant', label: 'Assistant', icon: MessageSquareText },
-    { id: 'approvals', label: 'Approvals', icon: ClipboardCheck },
-    { id: 'valio', label: 'Valio view', icon: BarChart3 },
-    { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
+    { id: 'assistant', label: t('tab_assistant'), icon: MessageSquareText },
+    { id: 'approvals', label: t('tab_approvals'), icon: ClipboardCheck },
+    { id: 'valio', label: t('tab_valio'), icon: BarChart3 },
+    { id: 'preferences', label: t('tab_prefs'), icon: SlidersHorizontal },
   ]
   return (
     <header className="relative z-20 flex h-14 shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-6">
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#0b2f6b] text-[15px] font-bold tracking-tight text-white shadow-sm">VA</div>
         <div className="leading-tight">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0b2f6b]/70">Valio Aimo</div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0b2f6b]/70">{t('brand')}</div>
           <div className="flex items-center gap-2 text-[16px] font-semibold text-slate-900">
-            Aimo Assistant
-            <span className="rounded-md bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-800">prototype</span>
+            {t('app')}
+            <span className="rounded-md bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-800">{t('prototype')}</span>
           </div>
         </div>
       </div>
@@ -260,9 +280,17 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer }: {
       </nav>
 
       <div className="ml-auto flex items-center gap-4">
+        <div role="group" aria-label={t('language')} className="flex rounded-lg bg-slate-100 p-0.5 text-[12px] font-semibold">
+          {(['en', 'fi'] as Lang[]).map((l) => (
+            <button key={l} type="button" onClick={() => onLang(l)} aria-pressed={lang === l}
+              className={cx('rounded-md px-2 py-1 uppercase transition', lang === l ? 'bg-white text-[#0b2f6b] shadow-sm' : 'text-slate-500 hover:text-slate-800')}>
+              {l}
+            </button>
+          ))}
+        </div>
         <CustomerSwitcher customers={customers} customer={customer} onChange={onCustomer} />
         <a href="/console" className="flex items-center gap-1 text-[12px] text-slate-400 transition hover:text-[#0b2f6b]">
-          <Terminal className="h-3.5 w-3.5" /> Developer console
+          <Terminal className="h-3.5 w-3.5" /> {t('dev_console')}
         </a>
       </div>
     </header>
@@ -291,14 +319,14 @@ function CustomerSwitcher({ customers, customer, onChange }: { customers: Custom
           {customer ? initials(customer.contact?.name || customer.name) : '…'}
         </div>
         <div className="leading-tight">
-          <div className="text-[13px] font-semibold text-slate-800">{customer?.name || 'Loading…'}</div>
+          <div className="text-[13px] font-semibold text-slate-800">{customer?.name || t('loading')}</div>
           <div className="text-[11.5px] text-slate-500">{customer?.contact ? `${customer.contact.name} · ${customer.contact.role}` : ''}</div>
         </div>
         <ChevronDown className={cx('h-4 w-4 text-slate-400 transition', open && 'rotate-180')} />
       </button>
       {open && (
         <div className="anim-in absolute right-0 top-full mt-2 w-80 overflow-hidden rounded-xl bg-white p-1.5 shadow-xl ring-1 ring-slate-200">
-          <div className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">Signed in as</div>
+          <div className="px-2.5 pb-1 pt-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">{t('signed_in_as')}</div>
           {customers.map((c) => (
             <button key={c.id} type="button" onClick={() => { onChange(c.id); setOpen(false) }}
               className={cx('flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-slate-50', c.id === customer?.id && 'bg-[#eef3fc]')}>

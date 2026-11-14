@@ -3,6 +3,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Markdown, cx } from '../components/ui'
+import { getLang, t, tn } from './i18n'
 import type { Message, Session } from './types'
 
 interface Props {
@@ -35,23 +36,23 @@ export function Chat({ session, sending, onSend, onNew }: Props) {
   })
   const last = blocks[blocks.length - 1]
 
-  const placeholder = session?.order ? 'Tell Aimo what you need…'
-    : session?.question?.questions?.length ? 'Or type your answer…'
-      : session?.plan?.status === 'proposed' && !session.cart ? 'Ask for a change to the list…'
-        : session?.cart ? 'Ask for a change to the cart…'
-          : 'Tell Aimo what you need…'
+  const placeholder = session?.order ? t('ph_request')
+    : session?.question?.questions?.length ? t('ph_answer')
+      : session?.plan?.status === 'proposed' && !session.cart ? t('ph_list')
+        : session?.cart ? t('ph_cart')
+          : t('ph_request')
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-12 shrink-0 items-center justify-between border-b border-slate-200/80 px-5">
         <div className="flex items-center gap-2">
           <AssistantAvatar />
-          <span className="text-[13.5px] font-semibold text-slate-900">Aimo Assistant</span>
+          <span className="text-[13.5px] font-semibold text-slate-900">{t('app')}</span>
           <span className={cx('h-1.5 w-1.5 rounded-full', busy ? 'bg-amber-500' : 'bg-emerald-500')} />
         </div>
         <button type="button" onClick={onNew} disabled={busy}
           className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[12px] font-medium text-slate-500 transition hover:bg-slate-100 hover:text-slate-800 disabled:opacity-40">
-          <RotateCcw className="h-3.5 w-3.5" /> New
+          <RotateCcw className="h-3.5 w-3.5" /> {t('new_chat')}
         </button>
       </div>
 
@@ -95,8 +96,8 @@ function MessageView({ m, open }: { m: Message; open: boolean }) {
       const qs = m.questions?.length ? m.questions.map((q) => q.text) : [m.text]
       return (
         <div className="anim-in text-[12.5px] leading-snug text-slate-500">
-          <span className="font-medium text-slate-600">Aimo asked:</span> {qs.join(' · ')}
-          {open && <span className="text-[#1f4fbf]"> — answer on the right →</span>}
+          <span className="font-medium text-slate-600">{t('aimo_asked')}</span> {qs.join(' · ')}
+          {open && <span className="text-[#1f4fbf]"> {t('answer_right')}</span>}
         </div>
       )
     }
@@ -142,7 +143,7 @@ function Steps({ items, running }: { items: Message[]; running: boolean }) {
     <div className="text-[12.5px] text-slate-500">
       <button type="button" onClick={() => setOpen(!open)} className="flex items-center gap-1.5 hover:text-slate-800">
         <span className="grid h-3.5 w-3.5 place-items-center rounded-full bg-emerald-500 text-white"><Check className="h-2.5 w-2.5" strokeWidth={3} /></span>
-        {items.length} step{items.length === 1 ? '' : 's'}
+        {tn('steps_one', 'steps_other', items.length)}
         <ChevronDown className={cx('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
@@ -204,7 +205,7 @@ function Composer({ disabled, onSend, placeholder }: { disabled: boolean; onSend
       return
     }
     const r = new SRClass()
-    r.lang = 'en-US'
+    r.lang = getLang() === 'fi' ? 'fi-FI' : 'en-US'
     r.interimResults = true
     r.continuous = true
     base.current = text ? text.trimEnd() + ' ' : ''
@@ -226,7 +227,7 @@ function Composer({ disabled, onSend, placeholder }: { disabled: boolean; onSend
     <div className="shrink-0 border-t border-slate-200/80 px-4 py-3">
       <div className={cx('flex items-end gap-1.5 rounded-xl bg-white p-1.5 ring-1 transition',
         listening ? 'ring-2 ring-red-300' : 'ring-slate-200 focus-within:ring-2 focus-within:ring-[#1f4fbf]/40')}>
-        <textarea ref={ta} rows={1} value={text} onChange={(e) => setText(e.target.value)} placeholder={listening ? 'Listening…' : placeholder}
+        <textarea ref={ta} rows={1} value={text} onChange={(e) => setText(e.target.value)} placeholder={listening ? t('listening') : placeholder}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault()
@@ -235,12 +236,12 @@ function Composer({ disabled, onSend, placeholder }: { disabled: boolean; onSend
           }}
           className="max-h-32 min-h-[36px] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-[13.5px] text-slate-800 placeholder:text-slate-400 focus:outline-none" />
         {SRClass && (
-          <button type="button" onClick={toggleMic} title={listening ? 'Stop listening' : 'Speak'}
+          <button type="button" onClick={toggleMic} title={listening ? t('stop_listening') : t('speak')}
             className={cx(iconBtn, listening ? 'live-mic bg-red-500 text-white' : 'text-slate-500 hover:bg-slate-100 hover:text-[#0b2f6b]')}>
             {listening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
           </button>
         )}
-        <button type="button" onClick={submit} disabled={disabled || !text.trim()} title="Send"
+        <button type="button" onClick={submit} disabled={disabled || !text.trim()} title={t('send')}
           className={cx(iconBtn, 'bg-[#0b2f6b] text-white hover:bg-[#123d86] disabled:bg-slate-200 disabled:text-slate-400')}>
           <SendHorizontal className="h-4 w-4" />
         </button>

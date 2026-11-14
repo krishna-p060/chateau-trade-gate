@@ -22,8 +22,9 @@ export interface SettingsIn {
 }
 
 export const shop = {
-  customers: () => request<Customer[]>('/api/shop/customers'),
-  create: (customer_id: string) => post<Session>('/api/shop/sessions', { customer_id }),
+  customers: (lang: string) => request<Customer[]>(`/api/shop/customers?lang=${lang}`),
+  create: (customer_id: string, lang: string) => post<Session>('/api/shop/sessions', { customer_id, lang }),
+  setLang: (sid: string, lang: string) => post<Session>(`${S(sid)}/lang`, { lang }),
   session: (sid: string) => request<Session>(S(sid)),
   send: (sid: string, text: string) => post<Session>(`${S(sid)}/messages`, { text }),
   standingOrder: (sid: string, standing_order_id: string) => post<Session>(`${S(sid)}/standing-order`, { standing_order_id }),
@@ -36,8 +37,8 @@ export const shop = {
   reference: (sid: string, reference: string) => post<Session>(`${S(sid)}/cart/reference`, { reference }),
   saveTemplate: (sid: string, name: string) => post<Session>(`${S(sid)}/save-template`, { name }),
   notify: (sid: string, line_key: string) => post<Session>(`${S(sid)}/cart/notify`, { line_key }),
-  saveSettings: (cid: string, body: SettingsIn) =>
-    request<Customer>(`/api/shop/customers/${encodeURIComponent(cid)}/settings`, { method: 'PUT', body: JSON.stringify(body) }),
+  saveSettings: (cid: string, body: SettingsIn, lang: string) =>
+    request<Customer>(`/api/shop/customers/${encodeURIComponent(cid)}/settings?lang=${lang}`, { method: 'PUT', body: JSON.stringify(body) }),
   insights: () => request<Insights>('/api/shop/insights'),
   approvals: () => request<Approval[]>('/api/console/approvals?status=PENDING'),
   decide: (id: string, approver: string, approve: boolean, note: string) =>

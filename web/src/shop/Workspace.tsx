@@ -2,7 +2,7 @@ import { AlertCircle, ArrowRight, CalendarClock, Check, ChevronRight, MessageSqu
 import { Fragment, useState } from 'react'
 import { Spinner } from '../components/ToolSteps'
 import { cx } from '../components/ui'
-import { num } from '../lib/format'
+import { fNum, fWeekdays, t, type Key } from './i18n'
 import { OrderView, Products, type CartActions } from './Cart'
 import { Ingredients, PlanList } from './Ingredients'
 import type { Customer, Funnel, PlanItemOut, Question, Session } from './types'
@@ -47,7 +47,7 @@ export function Workspace(p: Props) {
     if (plan.status === 'approved') step = 2
     body = (
       <div className="flex h-full min-h-0 flex-col">
-        {busy ? <WorkingBar session={session} /> : <StalledBar session={session} onRetry={() => p.onSend('Please try again.')} />}
+        {busy ? <WorkingBar session={session} /> : <StalledBar session={session} onRetry={() => p.onSend(t('try_again_msg'))} />}
         <div className={cx('min-h-0 flex-1 overflow-y-auto px-8 py-5', busy && 'opacity-50')}><PlanList plan={plan} /></div>
       </div>
     )
@@ -66,7 +66,7 @@ export function Workspace(p: Props) {
 }
 
 // ------------------------------------------------------------------ stepper
-const STEPS = ['Request', 'Ingredients', 'Products', 'Order']
+const STEPS: Key[] = ['step_request', 'step_ingredients', 'step_products', 'step_order']
 
 function Stepper({ current, done, skippedIngredients }: { current: number; done: boolean; skippedIngredients: boolean }) {
   return (
@@ -84,13 +84,13 @@ function Stepper({ current, done, skippedIngredients }: { current: number; done:
                 active ? 'bg-[#0b2f6b] text-white' : skipped ? 'bg-slate-100 text-slate-400' : isDone ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400')}>
                 {skipped ? '–' : isDone ? <Check className="h-3.5 w-3.5" strokeWidth={3} /> : i + 1}
               </span>
-              {skipped ? 'Your list' : label}
+              {skipped ? t('your_list') : t(label)}
             </div>
           </Fragment>
         )
       })}
       <span className="ml-auto flex items-center gap-1.5 text-[12px] text-slate-400">
-        <ShieldCheck className="h-3.5 w-3.5" />You approve every step
+        <ShieldCheck className="h-3.5 w-3.5" />{t('you_approve')}
       </span>
     </div>
   )
@@ -103,8 +103,8 @@ function Start({ customer, onSend, onStanding }: { customer: Customer | null; on
   return (
     <div className="h-full overflow-y-auto"><div className="flex min-h-full items-center justify-center px-8 py-6">
       <div className="w-full max-w-xl">
-        <h1 className="text-center text-[26px] font-semibold text-slate-900">What are you cooking?</h1>
-        <p className="mt-1.5 text-center text-[13.5px] text-slate-500">You approve every step. Nothing is ordered until you confirm.</p>
+        <h1 className="text-center text-[26px] font-semibold text-slate-900">{t('start_title')}</h1>
+        <p className="mt-1.5 text-center text-[13.5px] text-slate-500">{t('start_sub')}</p>
 
         <div className="mt-6 space-y-2">
           {sugg.map((s) => (
@@ -118,18 +118,18 @@ function Start({ customer, onSend, onStanding }: { customer: Customer | null; on
 
         {templates.length > 0 && (
           <div className="mt-6">
-            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-slate-400">Your order templates</div>
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-slate-400">{t('your_templates')}</div>
             <div className="space-y-2">
-              {templates.slice(0, 3).map((t) => (
-                <div key={t.id} className="flex items-center gap-3 rounded-xl bg-white px-4 py-2.5 ring-1 ring-slate-200">
+              {templates.slice(0, 3).map((tp) => (
+                <div key={tp.id} className="flex items-center gap-3 rounded-xl bg-white px-4 py-2.5 ring-1 ring-slate-200">
                   <CalendarClock className="h-5 w-5 shrink-0 text-[#0b2f6b]/70" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-medium text-slate-800">{t.name}</div>
-                    <div className="text-[12px] text-slate-500">{t.lines.length} items · {t.weekdays.map((d) => d.slice(0, 3)).join('/')}</div>
+                    <div className="truncate text-[14px] font-medium text-slate-800">{tp.name}</div>
+                    <div className="text-[12px] text-slate-500">{t('items_n', { n: tp.lines.length })} · {fWeekdays(tp.weekdays)}</div>
                   </div>
-                  <button type="button" onClick={() => onStanding(t.id)}
+                  <button type="button" onClick={() => onStanding(tp.id)}
                     className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-[#0b2f6b] ring-1 ring-slate-200 transition hover:bg-[#eef3fc]">
-                    Check for next delivery
+                    {t('check_next')}
                   </button>
                 </div>
               ))}
@@ -138,7 +138,7 @@ function Start({ customer, onSend, onStanding }: { customer: Customer | null; on
         )}
 
         <p className="mt-5 flex items-center justify-center gap-1.5 text-[12.5px] text-slate-400">
-          <MessageSquareText className="h-3.5 w-3.5" />or type or speak your own request on the left
+          <MessageSquareText className="h-3.5 w-3.5" />{t('start_hint')}
         </p>
       </div>
     </div></div>
@@ -167,7 +167,7 @@ function Questions({ questions, onAnswers }: { questions: Question[]; onAnswers:
   return (
     <div className="h-full overflow-y-auto"><div className="flex min-h-full items-center justify-center px-8 py-6">
       <div className="w-full max-w-xl rounded-2xl bg-white px-7 py-6 shadow-sm ring-1 ring-slate-200">
-        <div className="text-[12px] font-semibold uppercase tracking-wider text-[#1f4fbf]">Quick question{single ? '' : 's'}</div>
+        <div className="text-[12px] font-semibold uppercase tracking-wider text-[#1f4fbf]">{single ? t('quick_question') : t('quick_questions')}</div>
         <div className="mt-3 space-y-5">
           {questions.map((q) => (
             <div key={q.id}>
@@ -188,11 +188,11 @@ function Questions({ questions, onAnswers }: { questions: Question[]; onAnswers:
           ))}
         </div>
         <div className="mt-6 flex items-center gap-4">
-          <span className="text-[12.5px] text-slate-400">or type your answer on the left</span>
+          <span className="text-[12.5px] text-slate-400">{t('type_answer_left')}</span>
           {!single && (
             <button type="button" disabled={!all || busy} onClick={() => submit(answers)}
               className="ml-auto flex items-center gap-2 rounded-xl bg-[#0b2f6b] px-5 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#123d86] disabled:bg-slate-300">
-              {busy && <Spinner className="h-4 w-4" />}Continue<ArrowRight className="h-4 w-4" />
+              {busy && <Spinner className="h-4 w-4" />}{t('continue')}<ArrowRight className="h-4 w-4" />
             </button>
           )}
           {single && busy && <Spinner className="ml-auto h-4 w-4 text-[#1f4fbf]" />}
@@ -209,18 +209,18 @@ function progressOf(session: Session | null): { text: string; funnel: Funnel | n
   const run = msgs.slice(from + 1).filter((m) => m.role === 'progress')
   const last = run[run.length - 1]
   const funnel = [...run].reverse().find((m) => m.funnel)?.funnel ?? null
-  const fallback = session?.plan?.status === 'revising' ? 'Updating the list…' : 'Working on it…'
-  return { text: last?.funnel ? 'Checking live price and stock…' : last?.text || fallback, funnel }
+  const fallback = session?.plan?.status === 'revising' ? t('updating_list') : t('working')
+  return { text: last?.funnel ? t('checking_live') : last?.text || fallback, funnel }
 }
 
 function FunnelView({ f }: { f: Funnel }) {
-  const parts: [number | undefined, string][] = [[f.catalog_size, 'products'], [f.checked_live, 'checked live'], [f.shortlisted, 'candidates']]
+  const parts: [number | undefined, string][] = [[f.catalog_size, t('f_products')], [f.checked_live, t('f_checked')], [f.shortlisted, t('f_candidates')]]
   return (
     <div className="flex items-center gap-3">
       {parts.filter(([n]) => typeof n === 'number').map(([n, label], i) => (
         <Fragment key={label}>
           {i > 0 && <ArrowRight className="h-4 w-4 text-slate-300" />}
-          <span className="text-[13px] text-slate-500"><span className="text-[17px] font-semibold tabular-nums text-slate-900">{num(n)}</span> {label}</span>
+          <span className="text-[13px] text-slate-500"><span className="text-[17px] font-semibold tabular-nums text-slate-900">{fNum(n)}</span> {label}</span>
         </Fragment>
       ))}
     </div>
@@ -249,11 +249,11 @@ function StalledBar({ session, onRetry }: { session: Session | null; onRetry: ()
       failed ? 'border-red-200 bg-red-50 text-red-800' : 'border-amber-200 bg-amber-50 text-amber-900')}>
       <AlertCircle className="h-4 w-4 shrink-0" />
       <span className="min-w-0 flex-1 truncate">
-        {failed ? 'Something went wrong while finding products. Your approved list is safe.' : 'Aimo replied in the chat — nothing was ordered.'}
+        {failed ? t('stalled_error') : t('stalled_reply')}
       </span>
       <button type="button" onClick={onRetry}
         className="flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-[13px] font-semibold text-slate-800 ring-1 ring-slate-300 hover:bg-slate-50">
-        <RotateCcw className="h-3.5 w-3.5" />Try again
+        <RotateCcw className="h-3.5 w-3.5" />{t('try_again')}
       </button>
     </div>
   )

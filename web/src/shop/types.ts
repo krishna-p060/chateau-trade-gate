@@ -31,7 +31,7 @@ export interface Customer {
   approvers?: string[]
   standing_orders?: StandingOrder[]
   recipes?: Recipe[]
-  usual_products?: { product_id: string; name: string }[]
+  usual_products?: { product_id: string; name: string; name_fi?: string }[]
   suggestions?: string[]
 }
 
@@ -122,6 +122,7 @@ export interface Delivery {
 export interface Option {
   product_id: string
   name: string
+  name_fi?: string | null
   brand?: string | null
   pack?: string
   units: number
@@ -147,6 +148,7 @@ export interface Option {
   times_bought?: number
   valio_substitute?: boolean
   notes?: string[]
+  note_codes?: string[]
   why?: string
 }
 
@@ -157,7 +159,7 @@ export interface Line {
   quantity?: number
   unit?: string
   decision_needed?: boolean
-  replaces?: { product_id: string; name: string } | null
+  replaces?: { product_id: string; name: string; name_fi?: string | null } | null
   selected: number
   problem?: string | null
   notify?: boolean
@@ -205,6 +207,7 @@ export interface OrderInfo {
 export interface Session {
   id: string
   customer_id: string
+  lang?: string
   status: 'idle' | 'working' | 'waiting' | 'review' | 'cart' | 'ordering' | 'ordered' | 'error' | string
   step?: 'request' | 'ingredients' | 'products' | 'order' | string
   busy: boolean

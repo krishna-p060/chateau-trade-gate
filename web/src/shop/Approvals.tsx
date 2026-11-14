@@ -2,7 +2,7 @@ import { AlertTriangle, Check, Inbox, ShieldCheck, Sparkles, UserCheck, X } from
 import { useState } from 'react'
 import { Spinner } from '../components/ToolSteps'
 import { cx } from '../components/ui'
-import { ago, day, eur, num } from '../lib/format'
+import { fAgo as ago, fDay as day, fEur as eur, fNum as num, t, tn } from './i18n'
 import type { Approval } from '../types'
 import { approverOf, splitPerson } from './format'
 import type { Customer } from './types'
@@ -21,9 +21,9 @@ export function Approvals({ approvals, customers, onDecide }: Props) {
     <div className="mx-auto w-full max-w-4xl px-8 py-8">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Approvals</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">{t('appr_title')}</h1>
           <p className="mt-1 max-w-2xl text-[14px] text-slate-500">
-            Orders above a customer’s own limit wait here for the person their purchasing mandate names. Nothing is sent to the warehouse until they decide.
+            {t('appr_sub')}
           </p>
         </div>
         {people.length > 0 && (
@@ -48,9 +48,9 @@ export function Approvals({ approvals, customers, onDecide }: Props) {
         {approvals.length === 0 && (
           <div className="rounded-2xl bg-white px-8 py-14 text-center shadow-sm ring-1 ring-slate-200/80">
             <div className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Inbox className="h-6 w-6" /></div>
-            <div className="text-[16px] font-semibold text-slate-800">Nothing waiting for approval</div>
+            <div className="text-[16px] font-semibold text-slate-800">{t('appr_empty')}</div>
             <p className="mx-auto mt-1 max-w-md text-[13.5px] text-slate-500">
-              When an order is above the customer’s limit or needs a second look, it shows up here with plain-language reasons.
+              {t('appr_empty_body')}
             </p>
           </div>
         )}
@@ -85,25 +85,25 @@ function ApprovalCard({ a, customers, leaving, onDecide }: {
       <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-800">Needs your approval</span>
-            {via && <span className="flex items-center gap-1 text-[11.5px] text-slate-400"><Sparkles className="h-3 w-3" />via Aimo Assistant</span>}
+            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11.5px] font-semibold text-amber-800">{t('needs_approval')}</span>
+            {via && <span className="flex items-center gap-1 text-[11.5px] text-slate-400"><Sparkles className="h-3 w-3" />{t('via_aimo')}</span>}
           </div>
           <div className="mt-1.5 text-[17px] font-semibold text-slate-900">{cust?.name || a.buyer_id}</div>
           <div className="text-[12.5px] text-slate-500">
-            {cust?.contact ? `Ordered by ${cust.contact.name}` : 'Order'}
-            {o?.quote?.deliver_by && ` · delivery ${day(o.quote.deliver_by)}`} · {ago(a.created)}
+            {cust?.contact ? t('ordered_by', { name: cust.contact.name }) : t('order')}
+            {o?.quote?.deliver_by && ` · ${t('delivery_lc')} ${day(o.quote.deliver_by)}`} · {ago(a.created)}
             <span className="ml-1 font-mono text-[11px] text-slate-400">{a.order_id}</span>
           </div>
         </div>
         <div className="shrink-0 text-right">
           <div className="text-2xl font-semibold tabular-nums text-slate-900">{eur(o?.total)}</div>
-          <div className="text-[11.5px] text-slate-400">excl. VAT</div>
+          <div className="text-[11.5px] text-slate-400">{t('excl_vat')}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-5 gap-6 px-6 py-4">
         <div className="col-span-3">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{lines.length} line{lines.length === 1 ? '' : 's'}</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{tn('lines_one', 'lines_other', lines.length)}</div>
           <div className="max-h-60 divide-y divide-slate-100 overflow-y-auto pr-1">
             {lines.map((l, i) => (
               <div key={i} className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]">
@@ -115,14 +115,14 @@ function ApprovalCard({ a, customers, leaving, onDecide }: {
           </div>
         </div>
         <div className="col-span-2">
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Why it needs you</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">{t('why_needs')}</div>
           <ul className="space-y-1.5">
             {reasons.map((r, i) => (
               <li key={i} className="flex gap-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[12.5px] leading-snug text-amber-900">
                 <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />{r}
               </li>
             ))}
-            {reasons.length === 0 && <li className="text-[12.5px] text-slate-500">Above the customer’s approval limit.</li>}
+            {reasons.length === 0 && <li className="text-[12.5px] text-slate-500">{t('above_limit')}</li>}
           </ul>
         </div>
       </div>
@@ -132,19 +132,19 @@ function ApprovalCard({ a, customers, leaving, onDecide }: {
           <UserCheck className="h-4 w-4 text-[#0b2f6b]" />
           <span><span className="font-semibold text-slate-800">{who.name}</span>{who.role && <span className="text-slate-400"> · {who.role}</span>}</span>
         </div>
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note for the kitchen (optional)"
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('note_ph')}
           className="min-w-0 flex-1 rounded-lg border-0 bg-white px-3 py-2 text-[13px] text-slate-800 ring-1 ring-slate-200 placeholder:text-slate-400 focus:ring-2 focus:ring-[#1f4fbf]/40 focus:outline-none" />
         <button type="button" disabled={!!busy || leaving} onClick={() => go(false)}
           className="flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-2 text-[13px] font-semibold text-red-600 ring-1 ring-red-200 transition hover:bg-red-50 disabled:opacity-60">
-          {busy === 'reject' ? <Spinner /> : <X className="h-4 w-4" />} Reject
+          {busy === 'reject' ? <Spinner /> : <X className="h-4 w-4" />} {t('reject')}
         </button>
         <button type="button" disabled={!!busy || leaving} onClick={() => go(true)}
           className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-60">
-          {busy === 'approve' ? <Spinner /> : <Check className="h-4 w-4" />} Approve
+          {busy === 'approve' ? <Spinner /> : <Check className="h-4 w-4" />} {t('approve')}
         </button>
       </div>
       <div className="flex items-center gap-1.5 px-6 pb-3 text-[11px] text-slate-400">
-        <ShieldCheck className="h-3.5 w-3.5" /> Your decision is recorded in the tamper-evident audit trail; on approval Valio signs the order confirmation.
+        <ShieldCheck className="h-3.5 w-3.5" /> {t('audit_note')}
       </div>
     </div>
   )

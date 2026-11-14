@@ -1,7 +1,7 @@
-import { ArrowRight, Bell, Bot, Euro, Heart, Link2, Receipt, Repeat, SearchX, ShieldCheck, ShieldX, Sparkles } from 'lucide-react'
+import { ArrowRight, Bell, Bot, CheckCircle2, Clock, Euro, Heart, Link2, Receipt, Repeat, SearchX, ShieldCheck, ShieldX, Sparkles, XCircle } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { StatusPill, cx } from '../components/ui'
-import { ago, day, eur, num } from '../lib/format'
+import { cx } from '../components/ui'
+import { fAgo as ago, fDay as day, fEur as eur, fNum as num, fUnit, t, type Key } from './i18n'
 import type { AuditEntry } from '../types'
 import { shop, type Insights } from './api'
 import type { Customer } from './types'
@@ -39,7 +39,6 @@ export function ValioView({ customers }: { customers: Customer[] }) {
   const signals = data?.signals || []
   const orders = data?.orders || []
   const subs = signals.filter((s) => s.event === 'signal.substitution').length
-  const prefs = signals.filter((s) => s.event === 'signal.preference').length
   const notifies = signals.filter((s) => s.event === 'signal.notify').length
   const unmet = signals.filter((s) => s.event === 'signal.unmet').length
   const confirmed = orders.filter((o) => o.status === 'CONFIRMED')
@@ -52,47 +51,47 @@ export function ValioView({ customers }: { customers: Customer[] }) {
   return (
     <div className="mx-auto w-full max-w-6xl px-8 py-8">
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#1f4fbf]">Valio Aimo internal</div>
-        <h1 className="mt-0.5 text-2xl font-semibold text-slate-900">What the assistant tells Valio</h1>
+        <div className="text-[11px] font-semibold uppercase tracking-wider text-[#1f4fbf]">{t('vv_kicker')}</div>
+        <h1 className="mt-0.5 text-2xl font-semibold text-slate-900">{t('vv_title')}</h1>
         <p className="mt-1 max-w-3xl text-[14px] text-slate-500">
-          Every substitution and preference the customer makes in the cart becomes a signal for Valio’s purchasing and assortment — so do back-in-stock requests and demand the assortment couldn’t meet.
+          {t('vv_sub')}
         </p>
       </div>
       {err && !data && <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-[13px] text-red-700 ring-1 ring-red-200">{err}</div>}
 
       <div className="mt-6 grid grid-cols-4 gap-4">
-        <Tile icon={<Receipt className="h-4 w-4" />} label="Orders" value={String(orders.length)} sub={`${viaShop} via Aimo Assistant`} />
-        <Tile icon={<Euro className="h-4 w-4" />} label="Confirmed value" value={eur(total, true)} sub={`${confirmed.length} confirmed · excl. VAT`} />
-        <Tile icon={<Repeat className="h-4 w-4" />} label="Substitutions accepted" value={String(subs)} sub={`${notifies} back-in-stock · ${unmet} unmet${prefs ? ` · ${prefs} pref.` : ''}`} />
-        <Tile icon={intact === false ? <ShieldX className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />} label="Audit trail"
-          value={intact === null ? '—' : intact ? 'Chain intact' : 'Chain broken'}
+        <Tile icon={<Receipt className="h-4 w-4" />} label={t('kpi_orders')} value={String(orders.length)} sub={t('kpi_via', { n: viaShop })} />
+        <Tile icon={<Euro className="h-4 w-4" />} label={t('kpi_value')} value={eur(total, true)} sub={t('kpi_confirmed', { n: confirmed.length })} />
+        <Tile icon={<Repeat className="h-4 w-4" />} label={t('kpi_subs')} value={String(subs)} sub={t('kpi_subs_sub', { a: notifies, b: unmet })} />
+        <Tile icon={intact === false ? <ShieldX className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />} label={t('kpi_audit')}
+          value={intact === null ? '—' : intact ? t('chain_ok') : t('chain_broken')}
           valueClass={intact === false ? 'text-red-600' : 'text-emerald-700'}
-          sub={intact === null ? '' : `${checked ?? '?'} hash-linked entries verified ${intact ? '✓' : '✗'}`} />
+          sub={intact === null ? '' : `${t('chain_n', { n: checked ?? '?' })} ${intact ? '✓' : '✗'}`} />
       </div>
 
       <div className="mt-6 grid grid-cols-5 gap-6">
         <section className="col-span-2">
-          <SectionHead icon={<Sparkles className="h-4 w-4" />} title="Signals for Valio Aimo" />
+          <SectionHead icon={<Sparkles className="h-4 w-4" />} title={t('signals')} />
           <div className="space-y-2.5">
             {signals.map((s) => <SignalCard key={s.seq} s={s} name={name(s.buyer_id)} />)}
             {signals.length === 0 && (
               <div className="rounded-2xl bg-white px-5 py-8 text-center text-[13px] text-slate-500 shadow-sm ring-1 ring-slate-200/80">
-                No signals yet. Confirm a cart where the customer accepts a substitute or picks a different option, and it appears here.
+                {t('signals_empty')}
               </div>
             )}
           </div>
         </section>
 
         <section className="col-span-3">
-          <SectionHead icon={<Receipt className="h-4 w-4" />} title="Recent orders" />
+          <SectionHead icon={<Receipt className="h-4 w-4" />} title={t('recent_orders')} />
           <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80">
             <table className="w-full text-left text-[13px]">
               <thead className="bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="px-4 py-2.5">Customer</th>
-                  <th className="px-4 py-2.5">Channel</th>
-                  <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5 text-right">Total</th>
+                  <th className="px-4 py-2.5">{t('th_customer')}</th>
+                  <th className="px-4 py-2.5">{t('th_channel')}</th>
+                  <th className="px-4 py-2.5">{t('th_status')}</th>
+                  <th className="px-4 py-2.5 text-right">{t('th_total')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -106,15 +105,15 @@ export function ValioView({ customers }: { customers: Customer[] }) {
                       </td>
                       <td className="px-4 py-2.5">
                         {shopOrder
-                          ? <span className="inline-flex items-center gap-1 rounded-full bg-[#eef3fc] px-2 py-0.5 text-[11.5px] font-medium text-[#0b2f6b]"><Sparkles className="h-3 w-3" />Webshop · Aimo</span>
-                          : <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11.5px] font-medium text-slate-600"><Bot className="h-3 w-3" />API agent</span>}
+                          ? <span className="inline-flex items-center gap-1 rounded-full bg-[#eef3fc] px-2 py-0.5 text-[11.5px] font-medium text-[#0b2f6b]"><Sparkles className="h-3 w-3" />{t('ch_shop')}</span>
+                          : <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[11.5px] font-medium text-slate-600"><Bot className="h-3 w-3" />{t('ch_api')}</span>}
                       </td>
-                      <td className="px-4 py-2.5"><StatusPill status={o.status} order={o} /></td>
+                      <td className="px-4 py-2.5"><Status s={o.status} /></td>
                       <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-slate-900">{eur(o.total)}</td>
                     </tr>
                   )
                 })}
-                {orders.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">No orders yet</td></tr>}
+                {orders.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400">{t('no_orders')}</td></tr>}
               </tbody>
             </table>
           </div>
@@ -142,16 +141,30 @@ function SectionHead({ icon, title }: { icon: ReactNode; title: string }) {
   )
 }
 
-const KINDS: Record<string, { label: string; icon: typeof Repeat; cls: string }> = {
-  'signal.substitution': { label: 'Substitution accepted', icon: Repeat, cls: 'bg-amber-50 text-amber-800' },
-  'signal.preference': { label: 'Preference', icon: Heart, cls: 'bg-[#eef3fc] text-[#0b2f6b]' },
-  'signal.notify': { label: 'Back-in-stock request', icon: Bell, cls: 'bg-sky-50 text-sky-800' },
-  'signal.unmet': { label: 'Demand we couldn’t meet', icon: SearchX, cls: 'bg-red-50 text-red-700' },
+const KINDS: Record<string, { label: Key; icon: typeof Repeat; cls: string }> = {
+  'signal.substitution': { label: 'sig_sub', icon: Repeat, cls: 'bg-amber-50 text-amber-800' },
+  'signal.preference': { label: 'sig_pref', icon: Heart, cls: 'bg-[#eef3fc] text-[#0b2f6b]' },
+  'signal.notify': { label: 'sig_notify', icon: Bell, cls: 'bg-sky-50 text-sky-800' },
+  'signal.unmet': { label: 'sig_unmet', icon: SearchX, cls: 'bg-red-50 text-red-700' },
+}
+
+function Status({ s }: { s: string }) {
+  const u = (s || '').toUpperCase()
+  const [label, cls, Icon] = u === 'CONFIRMED' ? [t('st_confirmed'), 'bg-emerald-50 text-emerald-700 ring-emerald-600/20', CheckCircle2]
+    : u === 'PENDING_APPROVAL' ? [t('st_pending'), 'bg-amber-50 text-amber-800 ring-amber-600/25', Clock]
+      : u === 'REJECTED' ? [t('st_rejected'), 'bg-red-50 text-red-700 ring-red-600/20', XCircle]
+        : [s, 'bg-slate-100 text-slate-600 ring-slate-500/20', Clock]
+  return (
+    <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset', cls)}>
+      <Icon className="h-3.5 w-3.5" />{label}
+    </span>
+  )
 }
 
 function SignalCard({ s, name }: { s: AuditEntry; name: string }) {
   const d = (s.data || {}) as SignalData
-  const k = KINDS[s.event] || { label: s.event.replace('signal.', ''), icon: Sparkles, cls: 'bg-slate-100 text-slate-600' }
+  const kind = KINDS[s.event]
+  const k = { label: kind ? t(kind.label) : s.event.replace('signal.', ''), icon: kind?.icon || Sparkles, cls: kind?.cls || 'bg-slate-100 text-slate-600' }
   const Icon = k.icon
   let body: ReactNode
   if (s.event === 'signal.substitution' && d.from && d.to) {
@@ -167,7 +180,7 @@ function SignalCard({ s, name }: { s: AuditEntry; name: string }) {
     body = (
       <div className="mt-1.5 text-[12.5px] leading-snug">
         <div className="font-medium text-slate-800">{d.product.name}</div>
-        <div className="text-slate-500">Customer wants to know when it is available again.</div>
+        <div className="text-slate-500">{t('sig_notify_body')}</div>
       </div>
     )
   } else if (s.event === 'signal.unmet' && d.need) {
@@ -175,8 +188,8 @@ function SignalCard({ s, name }: { s: AuditEntry; name: string }) {
       <div className="mt-1.5 text-[12.5px] leading-snug">
         <div className="font-medium text-slate-800">{d.need}</div>
         <div className="text-slate-500">
-          {typeof d.quantity === 'number' && <>{num(d.quantity)} {d.unit === 'unit' ? 'pcs' : d.unit} </>}
-          {d.deliver_by && <>needed by {day(d.deliver_by)} </>}— nothing suitable in the assortment.
+          {typeof d.quantity === 'number' && <>{num(d.quantity)} {fUnit(d.unit)} </>}
+          {d.deliver_by && <>{t('needed_by', { d: day(d.deliver_by) })} </>}– {t('sig_unmet_body')}
         </div>
       </div>
     )
