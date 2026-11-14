@@ -668,6 +668,18 @@ class TradeGate:
                           data=tpl)
         return tpl
 
+    def add_recipe(self, buyer_id: str, name: str, portions: int, ingredients: list[dict], by: str) -> dict:
+        """Save an approved ingredient list as the customer's recipe (used for scaling next time)."""
+        b = self.buyer(buyer_id)
+        prof = b["profile"]
+        r = {"id": _id("r"), "name": name, "portions": portions, "ingredients": ingredients}
+        prof["recipes"] = [x for x in prof.get("recipes", []) if x["name"].lower() != name.lower()] + [r]
+        self.register_buyer(buyer_id, b["name"], b["jwk"], prof, b["mandate"])
+        self.audit.append(buyer_id=buyer_id, actor=f"human:{by}", event="recipe.saved", ref=r["id"],
+                          summary=f"{by} saved the recipe “{name}” ({portions} portions, "
+                                  f"{len(ingredients)} ingredients).", data=r)
+        return r
+
     def signal(self, buyer_id: str, kind: str, summary: str, data: dict) -> None:
         """Signals for Valio Aimo: substitutions accepted, alternatives preferred, demand we could not meet."""
         self.audit.append(buyer_id=buyer_id, actor=f"customer:{buyer_id}", event=f"signal.{kind}",

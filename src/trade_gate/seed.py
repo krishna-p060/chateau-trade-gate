@@ -163,7 +163,7 @@ def seed(gate) -> dict[str, str]:
         profile = copy.deepcopy(b["profile"])
         mandate = copy.deepcopy(b["mandate"])
         if existing and existing.get("mandate"):  # keep what the customer changed in the webshop
-            profile.update({k: existing["profile"][k] for k in ("priorities", "settings", "standing_orders") if k in existing["profile"]})
+            profile.update({k: existing["profile"][k] for k in ("priorities", "settings", "standing_orders", "recipes") if k in existing["profile"]})
             mandate = Mandate.from_credential_subject(existing["mandate"])
         gate.register_buyer(b["id"], b["name"], _key(b["id"], sd).jwk(), profile, mandate.to_credential_subject())
         out[b["id"]] = sign_mandate(mandate, sd)

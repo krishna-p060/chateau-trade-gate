@@ -342,15 +342,15 @@ def s_customers():
 
 _SUGGESTIONS = {
     "kultakeittio-catering": [
-        "Company party for 80 on Saturday: creamy salmon pasta, green salad and a dessert. 6 guests are gluten-free.",
-        "Pasta pesto for 400 people next Friday",
-        "We got a call: wedding dinner for 120 next Saturday — suggest a Finnish menu and order for it"],
+        "Pasta pesto for 40 people on Friday",
+        "Pizza margherita for 50 on Saturday",
+        "5 kg onions, 2 kg penne and 10 l cooking cream for Tuesday"],
     "hotel-aurora": [
-        "Conference lunch for 150 on Wednesday: toast Skagen starter and a fish main. We report CO₂.",
-        "Extra breakfast for 300 guests on Friday — what do I need on top of the usual?"],
+        "Toast Skagen for 150 conference guests on Wednesday",
+        "Salmon soup for 80 on Friday"],
     "espoo-childrens-hospital": [
-        "Dairy-free oat porridge for 100 children every morning next week",
-        "Afternoon snack for 120 children on Monday — biscuits or fruit, remember our allergy rules"],
+        "Oat porridge for 100 children on Monday",
+        "Afternoon snack for 120 children on Monday"],
 }
 
 
@@ -425,6 +425,35 @@ async def s_remove(sid: str, body: LineIn):
 @app.post("/api/shop/sessions/{sid}/confirm", tags=["shop"])
 async def s_confirm(sid: str):
     return (await shop.confirm(sid)).snapshot()
+
+
+class AnswersIn(BaseModel):
+    answers: dict[str, str]
+
+
+class PlanItemIn(BaseModel):
+    key: str | None = None
+    name: str
+    quantity: float
+    unit: str = "kg"
+    dish: str | None = None
+
+
+class PlanIn(BaseModel):
+    items: list[PlanItemIn]
+    save_recipes: list[str] = []
+
+
+@app.post("/api/shop/sessions/{sid}/answers", tags=["shop"])
+async def s_answers(sid: str, body: AnswersIn):
+    _need_llm()
+    return shop.answer(sid, body.answers).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/plan/approve", tags=["shop"])
+async def s_plan_approve(sid: str, body: PlanIn):
+    _need_llm()
+    return shop.approve_plan(sid, [i.model_dump() for i in body.items], body.save_recipes).snapshot()
 
 
 class ReferenceIn(BaseModel):

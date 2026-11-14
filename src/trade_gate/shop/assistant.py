@@ -25,62 +25,110 @@ from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
 from mcp.shared._httpx_utils import create_mcp_http_client
 
+from trade_gate.catalog.codes import expand_allergen, resolve_allergen
 from trade_gate.agent.buyer_agent import GATE_MCP_URL, _attr, _tool_result_text
 from trade_gate.config import AGENT_MODEL, TIMEZONE
 from trade_gate.engine.offers import TZ, build_offer
 from trade_gate.seed import load_mandate
 from trade_gate.service import GateError, TradeGate, _candidate
 
-GATE_TOOLS = {"get_customer_context", "find_products", "check_offers", "get_product"}
+GATE_TOOLS = {"find_products", "check_offers", "get_product"}  # context is loaded by the app itself
 MAX_STEPS = 14
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
 SYSTEM = """You are Aimo Assistant, the ordering assistant inside Valio Aimo's webshop for professional
 kitchens. Today is {today}. You are helping {contact} ({role}) at {customer}.
 
-The customer owns the decisions about WHAT to serve. You do the busy work after that: break dishes into
-ingredients and quantities, find the right products in Valio Aimo's catalog, check price and delivery,
-and prepare a cart. The customer reviews and confirms the cart; you never place orders.
+The customer decides WHAT to serve. You do the busy work: ingredients, quantities, finding the right
+products. You never place orders; the customer checks and confirms every step on screen. The customer
+context (priorities, rules, usual products, saved recipes, order templates) comes with the first message:
+use it instead of asking for things it already answers.
 
-How to work:
-1. Call get_customer_context once at the start of a conversation. Use what it tells you (priorities,
-   rules, usual products, saved recipes, order templates) instead of asking.
-2. If something essential is missing that would change products or quantities (number of portions, the
-   date, a dietary need), ask ONE short question with ask_customer and 2-4 tap-able answers. Ask at most
-   two questions in a whole conversation. Otherwise make a sensible professional assumption and state it.
-   If the customer asks you to suggest a menu, propose one in the cart title and assumptions; they decide.
-3. Quantities: use the customer's saved recipe when a dish matches (scale by portions). Otherwise use
-   professional kitchen quantities per portion. Work in kg or l.
-4. Call find_products ONCE for all ingredients (short English queries of 1-3 words, e.g. "cooking cream",
-   "salmon fillet", "penne"). deliver_by = the day before the event unless told otherwise. Delivery days
-   are Monday-Saturday. If a result is thin, you may call find_products again for just those items.
-5. For each line choose: option 1 = your recommendation, plus up to 2 alternatives ONLY when they differ
-   in a way this customer might care about (cheaper, usual product, lower CO2, Finnish, fresh vs frozen).
-   Weigh options by the customer's own stated priorities — there is no fixed formula. Prefer products the
-   customer usually buys when they fit. Set decision_needed=true only when the right choice genuinely
-   depends on the customer's taste or plans. "why" is at most 12 words, concrete (price, usual, CO2...).
-6. Call show_cart with the full cart. Then reply briefly (max ~60 words): one sentence on what you
-   prepared, then at most 3 short bullets for what needs their attention (a choice to make, a late or
-   unavailable item, an assumption that matters). The cart shows all details — do not repeat prices
-   of every line. No headings or tables.
-7. When the customer asks for a change, call show_cart again with the complete updated cart.
+You work through on-screen tools. Keep every text short; the screen shows the details.
 
-Vocabulary: Valio Aimo calls recurring/standing orders "order templates" — always use that term.
-Rules: never invent products, prices or stock — use only tool results. Allergen rules are absolute.
-If something cannot arrive in time, say so plainly and offer the closest alternative (other product or
-date). Do not narrate your steps before tool calls; the customer sees progress automatically.
+PATH A - broad request (a dish, a menu, an event, "food for N people"):
+ 1. If the number of portions, the delivery or event date, or a dietary need that changes the ingredients
+    is not stated, call ask_customer ONCE with all open questions (max 3), each with 2-4 tap-able
+    options. Never guess these three things.
+ 2. Call propose_ingredients: the ingredient list with quantities, for the customer to check and edit.
+    - If a saved recipe matches a dish, use it scaled by portions (source "recipe", with its recipe_id).
+    - If no saved recipe matches, use professional kitchen quantities per portion (source "estimate").
+    - Only what must be bought. Leave out salt, pepper, water and frying oil unless a recipe lists them.
+      Round sensibly. Units: kg, l or pcs.
+    - Never search products before the customer has approved the list.
+ 3. The tool returns the customer's final list. It is authoritative: use exactly their items and
+    quantities, including rows they added or removed. Then call find_products ONCE for all items, then
+    show_cart.
+
+PATH B - specific list (the customer names items with quantities, e.g. "5 kg onions, 2 kg penne"):
+ Skip propose_ingredients. If an item is ambiguous in a way that changes the product (type, fat %,
+ fresh or frozen, lactose-free) and the customer's history does not settle it, call ask_customer once.
+ Then find_products ONCE for all items, then show_cart.
+
+PATH C - a message starting with [Order template check ...]: follow its instructions.
+
+Changing an existing cart: call show_cart again with the complete updated cart.
+
+find_products: short English queries of 1-3 words ("cooking cream", "salmon fillet", "penne"); unit is
+'kg', 'l' or 'unit' (pieces/packs). deliver_by is the day before the event unless told otherwise;
+delivery days are Monday-Saturday. Call it a second time only for items whose results were thin.
+
+show_cart: per line, option 1 is your recommendation. Add up to 2 alternatives ONLY when they differ in
+a way this customer may care about (cheaper, their usual product, lower CO2, Finnish, fresh vs frozen).
+Weigh options by the customer's own stated priorities; there is no fixed formula. Prefer what they
+usually buy when it fits. Set decision_needed=true when the right choice depends on the customer's
+taste or plans: do not decide for them. "why" is at most 8 words and concrete. Reuse the keys of the
+ingredient list as line keys. "message" is what you say with the cart: at most 2 short sentences, only
+what needs their attention.
+
+Rules: never invent products, prices or stock; use only tool results. Call a product "your usual" only
+when its candidate has usual=true. Allergen rules are absolute. If
+something cannot arrive in time, say so and offer the closest alternative. Valio Aimo calls recurring
+orders "order templates". Do not write text outside the tools unless you are answering a question.
 Write in the customer's language (English unless they write Finnish)."""
 
 UI_TOOLS = [
     {
         "name": "ask_customer",
-        "description": "Ask the customer one short clarifying question with 2-4 tap-able answers. The "
-                       "conversation pauses until they answer. Use sparingly (max two per conversation).",
+        "description": "Ask the customer up to 3 short questions at once; each is answered with one tap. "
+                       "The conversation pauses until they answer. Use it instead of assuming.",
         "input_schema": {
             "type": "object",
-            "properties": {"question": {"type": "string"},
-                           "options": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 4}},
-            "required": ["question", "options"],
+            "properties": {"questions": {"type": "array", "minItems": 1, "maxItems": 3, "items": {
+                "type": "object",
+                "properties": {"id": {"type": "string"},
+                               "question": {"type": "string", "description": "Max 12 words."},
+                               "options": {"type": "array", "items": {"type": "string"},
+                                           "minItems": 2, "maxItems": 4}},
+                "required": ["id", "question", "options"]}}},
+            "required": ["questions"],
+        },
+    },
+    {
+        "name": "propose_ingredients",
+        "description": "Show the ingredient list for the customer to check, edit and approve BEFORE any "
+                       "product search. The conversation pauses; the tool returns their final list.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "title": {"type": "string", "description": "e.g. 'Pasta pesto for 40 - Fri 20 Nov'"},
+                "deliver_by": {"type": "string", "description": "YYYY-MM-DD"},
+                "message": {"type": "string", "description": "One short sentence shown with the list."},
+                "dishes": {"type": "array", "items": {
+                    "type": "object",
+                    "properties": {"name": {"type": "string"}, "portions": {"type": "integer"},
+                                   "source": {"type": "string", "enum": ["recipe", "estimate"]},
+                                   "recipe_id": {"type": "string"}},
+                    "required": ["name", "portions", "source"]}},
+                "items": {"type": "array", "items": {
+                    "type": "object",
+                    "properties": {"key": {"type": "string"}, "name": {"type": "string"},
+                                   "quantity": {"type": "number"},
+                                   "unit": {"type": "string", "enum": ["kg", "l", "pcs"]},
+                                   "dish": {"type": "string", "description": "Name of the dish it belongs to."}},
+                    "required": ["key", "name", "quantity", "unit", "dish"]}},
+            },
+            "required": ["title", "deliver_by", "dishes", "items"],
         },
     },
     {
@@ -92,6 +140,7 @@ UI_TOOLS = [
             "properties": {
                 "title": {"type": "string", "description": "e.g. 'Party for 80 — Sat 21 Nov'"},
                 "deliver_by": {"type": "string", "description": "YYYY-MM-DD"},
+                "message": {"type": "string", "description": "Max 2 short sentences said with the cart."},
                 "assumptions": {"type": "array", "items": {"type": "string"},
                                 "description": "Short assumptions the customer should know (max 4)."},
                 "portions": {"type": "integer", "description": "Total servings this cart feeds, if it is "
@@ -113,7 +162,7 @@ UI_TOOLS = [
                     },
                     "required": ["key", "need", "quantity", "unit", "options"]}},
             },
-            "required": ["title", "deliver_by", "lines"],
+            "required": ["title", "deliver_by", "message", "lines"],
         },
     },
 ]
@@ -131,20 +180,24 @@ def _mid() -> str:
 class Session:
     id: str
     customer_id: str
-    status: str = "idle"  # idle | working | waiting | cart | ordering | ordered | error
+    status: str = "idle"  # idle | working | waiting (questions) | review (ingredients) | cart | ordering | ordered
     messages: list[dict] = field(default_factory=list)
     cart: dict | None = None
     order: dict | None = None
     question: dict | None = None
+    plan: dict | None = None
+    ctx_loaded: bool = False
     llm: list[dict] = field(default_factory=list)
-    pending: dict | None = None  # {"tool_use_id": ..., "other_results": [...]}
+    pending: dict | None = None  # {"kind": "question"|"plan", "tool_use_id": ..., "other_results": [...]}
     listeners: set = field(default_factory=set)
     task: asyncio.Task | None = None
 
     def snapshot(self) -> dict:
-        return {"id": self.id, "customer_id": self.customer_id, "status": self.status,
+        step = ("order" if self.order else "products" if self.cart
+                else "ingredients" if self.plan else "request")
+        return {"id": self.id, "customer_id": self.customer_id, "status": self.status, "step": step,
                 "busy": self.status in ("working", "ordering"), "messages": self.messages,
-                "question": self.question, "cart": self.cart, "order": self.order}
+                "question": self.question, "plan": self.plan, "cart": self.cart, "order": self.order}
 
 
 class Shop:
@@ -158,8 +211,7 @@ class Shop:
         s = Session(id=f"s_{uuid.uuid4().hex[:10]}", customer_id=b["id"])
         contact = b["profile"].get("contact") or {}
         self._msg(s, "assistant", f"Hi {contact.get('name', '').split(' ')[0] or 'there'}! Tell me what you're "
-                  f"cooking — a menu and the number of guests is enough — and I'll prepare the cart. "
-                  f"I can also check one of your order templates for the next delivery.", notify=False)
+                  f"cooking, or give me a shopping list. You approve every step before anything is ordered.", notify=False)
         self.sessions[s.id] = s
         return s
 
@@ -196,24 +248,111 @@ class Shop:
         s.task = asyncio.create_task(runner())
 
     # ------------------------------------------------------------------ customer actions
+    @staticmethod
+    def _user_turn(s: Session, text: str) -> None:
+        """Add customer text to the model history (after a finished tool turn it joins that user turn)."""
+        if s.llm and s.llm[-1]["role"] == "user" and isinstance(s.llm[-1]["content"], list):
+            s.llm[-1]["content"].append({"type": "text", "text": text})
+        else:
+            s.llm.append({"role": "user", "content": text})
+
+    def _resume(self, s: Session, result: str) -> None:
+        """Hand the customer's on-screen answer back to the model as the paused tool's result."""
+        results = s.pending["other_results"] + [{"type": "tool_result", "tool_use_id": s.pending["tool_use_id"],
+                                                 "content": result}]
+        s.pending, s.question = None, None
+        s.llm.append({"role": "user", "content": results})
+        self._start(s, self._run(s))
+
     def send(self, sid: str, text: str) -> Session:
         s = self.get(sid)
         text = text.strip()
         if not text:
             raise GateError("EMPTY", "Message is empty.")
+        if s.status in ("working", "ordering"):
+            raise GateError("BUSY", "The assistant is still working on your previous message.", 409)
         self._msg(s, "user", text, notify=False)
-        if s.pending:  # answer to ask_customer
-            results = s.pending["other_results"] + [{"type": "tool_result", "tool_use_id": s.pending["tool_use_id"],
-                                                     "content": f"Customer answered: {text}"}]
-            s.pending, s.question = None, None
-            s.llm.append({"role": "user", "content": results})
+        if s.pending and s.pending["kind"] == "plan":
+            s.plan["status"] = "revising"
+            self._resume(s, f"The customer has NOT approved the list yet. They wrote: “{text}”. "
+                            f"Update the list and call propose_ingredients again.")
+        elif s.pending:
+            self._resume(s, f"Customer answered in their own words: {text}")
         else:
             prefix = ""
             if s.order and s.order.get("status") in ("CONFIRMED", "PENDING_APPROVAL"):
                 prefix = "(The previous cart was already ordered; this is a new request.) "
-                s.cart, s.order = None, None
-            s.llm.append({"role": "user", "content": prefix + text})
-        self._start(s, self._run(s))
+                s.cart, s.order, s.plan = None, None, None
+            self._user_turn(s, prefix + text)
+            self._start(s, self._run(s))
+        return s
+
+    def answer(self, sid: str, answers: dict[str, str]) -> Session:
+        s = self.get(sid)
+        if not s.pending or s.pending["kind"] != "question" or not s.question:
+            raise GateError("NO_QUESTION", "There is no open question.", 409)
+        qs = s.question["questions"]
+        missing = [q["text"] for q in qs if not (answers.get(q["id"]) or "").strip()]
+        if missing:
+            raise GateError("ANSWER_ALL", "Please answer: " + "; ".join(missing), 409)
+        self._msg(s, "user", " · ".join(answers[q["id"]].strip() for q in qs), notify=False)
+        self._resume(s, "Customer answered:\n" + "\n".join(f"- {q['text']} -> {answers[q['id']].strip()}" for q in qs))
+        return s
+
+    def approve_plan(self, sid: str, items: list[dict], save_recipes: list[str] | None = None) -> Session:
+        s = self.get(sid)
+        if not s.pending or s.pending["kind"] != "plan" or not s.plan:
+            raise GateError("NO_PLAN", "There is no ingredient list waiting for approval.", 409)
+        b = self.gate.buyer(s.customer_id)
+        who = (b["profile"].get("contact") or {}).get("name", "Customer")
+        before = {it["key"]: it for it in s.plan["items"]}
+        final, changes, seen = [], [], set()
+        for n, it in enumerate(items):
+            name = (it.get("name") or "").strip()
+            qty = float(it.get("quantity") or 0)
+            if not name or qty <= 0:
+                continue
+            unit = it.get("unit") if it.get("unit") in ("kg", "l", "pcs") else "kg"
+            old = before.get(it.get("key") or "")
+            key = old["key"] if old else f"x{n}"
+            seen.add(key)
+            final.append({"key": key, "name": name, "quantity": qty, "unit": unit,
+                          "dish": it.get("dish") or (old or {}).get("dish"),
+                          "source": (old or {}).get("source", "added"), "edited": False})
+            if not old:
+                changes.append(f"added {name} {qty:g} {unit}")
+                final[-1]["edited"] = True
+            elif (old["quantity"], old["unit"], old["name"]) != (qty, unit, name):
+                changes.append(f"{old['name']}: {old['quantity']:g} {old['unit']} → "
+                               + (f"{name} " if name != old["name"] else "") + f"{qty:g} {unit}")
+                final[-1]["edited"] = True
+        changes += [f"removed {it['name']}" for k, it in before.items() if k not in seen]
+        if not final:
+            raise GateError("EMPTY_PLAN", "The list is empty.", 409)
+        s.plan.update(items=final, status="approved", changes=changes)
+        self.gate.audit.append(
+            buyer_id=s.customer_id, actor=f"human:{who}", event="plan.approved",
+            summary=f"{who} approved the ingredient list “{s.plan['title']}” ({len(final)} items"
+                    + (f"; changes: {'; '.join(changes)}" if changes else ", unchanged") + ").",
+            data={"items": final, "changes": changes, "dishes": s.plan["dishes"]})
+        saved = []
+        for d in s.plan["dishes"]:
+            if d["name"] in (save_recipes or []) and d["source"] == "estimate":
+                ing = [{"name": it["name"], "quantity": it["quantity"], "unit": it["unit"]}
+                       for it in final if it.get("dish") == d["name"]]
+                if ing:
+                    self.gate.add_recipe(s.customer_id, d["name"], d["portions"], ing, by=who)
+                    d["saved"] = True
+                    saved.append(d["name"])
+        self._msg(s, "user", "Ingredients approved" + (f" ({len(changes)} change{'s' if len(changes) != 1 else ''})"
+                                                       if changes else ""), notify=False)
+        if saved:
+            self._msg(s, "progress", "Saved as your recipe: " + ", ".join(saved), notify=False)
+        self._resume(s, json.dumps({
+            "approved": True, "by": who, "changes": changes,
+            "items": [{k: it[k] for k in ("key", "name", "quantity", "unit", "dish")} for it in final],
+            "note": "Use exactly these items and quantities. Unit 'pcs' is 'unit' in find_products/show_cart.",
+        }, ensure_ascii=False))
         return s
 
     def select(self, sid: str, key: str, option: int) -> Session:
@@ -378,7 +517,7 @@ class Shop:
         if not so:
             raise GateError("UNKNOWN_STANDING_ORDER", f"No standing order {so_id}.", 404)
         self._msg(s, "user", f"Check my order template “{so['name']}” for the next delivery.", notify=False)
-        s.cart, s.order = None, None
+        s.cart, s.order, s.plan = None, None, None
         self._start(s, self._run_standing(s, b, so))
         return s
 
@@ -407,7 +546,8 @@ class Shop:
                   f"{len(ok)} available, {len(bad)} with problems.", notify=False)
         auto = (b["profile"].get("settings") or {}).get("auto_confirm_standing_orders")
         if not bad:
-            s.cart = self._cart_from(f"{so['name']} — {_day(d.isoformat())}", d, ok, [])
+            s.cart = self._cart_from(f"{so['name']} — {_day(d.isoformat())}", d, ok, [],
+                                     customer_id=s.customer_id)
             if auto:
                 s.status = "ordering"
                 self._notify(s)
@@ -429,14 +569,14 @@ class Shop:
         keep = "\n".join(f"- key {ln['key']}: {ln['need']} — {ln['options'][0]['units']:g} "
                          f"{ln['options'][0]['sales_unit']} (product {ln['options'][0]['product_id']}) OK"
                          for ln in ok)
-        s.llm.append({"role": "user", "content":
+        self._user_turn(s, (
                       f"[Order template check by Valio for delivery {d.isoformat()} — '{so['name']}']\n"
                       f"Available:\n{keep}\nProblems:\n{problems}\n\n"
                       f"Find substitutes for the problem items (find_products with replaces=<product_id>, "
                       f"quantity in kg/l when the pack content is known), then show_cart with ALL lines: "
                       f"available lines unchanged as a single option with quantity in 'unit' (packs), and each "
-                      f"substitute line with replaces set and up to 3 options, decision_needed=true. Then tell "
-                      f"the customer in two sentences what changed."})
+                      f"substitute line with replaces set and up to 3 options, decision_needed=true. In the "
+                      f"cart message say in one or two sentences what changed."))
         await self._run(s)
 
     # ------------------------------------------------------------------ cart building
@@ -477,15 +617,60 @@ class Shop:
         return out
 
     def _cart_from(self, title: str, deliver_by: date, lines: list[dict], assumptions: list[str],
-                   portions: int | None = None) -> dict:
-        cart = {"title": title, "deliver_by": deliver_by.isoformat(), "assumptions": assumptions[:4],
+                   portions: int | None = None, customer_id: str | None = None) -> dict:
+        cart = {"customer_id": customer_id, "title": title, "deliver_by": deliver_by.isoformat(), "assumptions": assumptions[:4],
                 "lines": lines, "portions": portions or None, "reference": "",
                 "updated": _now().isoformat(timespec="seconds")}
         self._totals(cart)
         return cart
 
-    @staticmethod
-    def _totals(cart: dict) -> None:
+    def _checks(self, cart: dict) -> list[dict]:
+        """Guardrails shown before the customer confirms (the gate enforces them again on the order)."""
+        if not cart.get("customer_id"):
+            return []
+        m = self.gate.buyer(cart["customer_id"])["mandate"] or {}
+        lim, diet = m.get("limits") or {}, m.get("dietary") or {}
+        approver = (m.get("approvers") or ["your approver"])[0].split(" (")[0]
+        sel = [ln["options"][ln["selected"]] for ln in cart["lines"] if ln["options"]]
+        total, out = cart["totals"]["total"], []
+        auto, hard = lim.get("auto_approve_max_order_eur"), lim.get("hard_max_order_eur")
+        if hard and total > hard:
+            out.append({"id": "spend", "level": "block", "label": f"Above the €{hard:,.0f} maximum for one order"})
+        elif auto and total > auto:
+            out.append({"id": "spend", "level": "warn", "label": f"Above your €{auto:,.0f} limit: {approver} approves"})
+        elif auto:
+            out.append({"id": "spend", "level": "ok", "label": f"Within your €{auto:,.0f} order limit"})
+        avoid = diet.get("avoid_allergens") or []
+        if avoid:
+            codes: set[str] = set()
+            for a in avoid:
+                c = resolve_allergen(a)
+                if c:
+                    codes |= expand_allergen(c)
+            bad = nodata = 0
+            for o in sel:
+                p = self.gate.catalog.get(o["product_id"])
+                if p and (set(p.allergens_contains) | set(p.allergens_may_contain)) & codes:
+                    bad += 1
+                elif p and not p.has_allergen_data:
+                    nodata += 1
+            if bad:
+                out.append({"id": "allergens", "level": "block",
+                            "label": f"{bad} product{'s' if bad > 1 else ''} conflict with your allergen rules"})
+            elif nodata and diet.get("require_allergen_data"):
+                out.append({"id": "allergens", "level": "warn",
+                            "label": f"{nodata} without allergen data: {approver} approves"})
+            else:
+                out.append({"id": "allergens", "level": "ok", "label": "Allergen rules met: no " + ", ".join(avoid)})
+        late = cart["totals"]["late"]
+        if late:
+            out.append({"id": "delivery", "level": "warn",
+                        "label": f"{late} item{'s' if late > 1 else ''} arrive after {_day(cart['deliver_by'])}"})
+        else:
+            out.append({"id": "delivery", "level": "ok", "label": f"Everything arrives by {_day(cart['deliver_by'])}"})
+        return out
+
+    def _totals(self, cart: dict) -> None:
         sel = [ln["options"][ln["selected"]] for ln in cart["lines"] if ln["options"]]
         total = round(sum(o["total"] or 0 for o in sel), 2)
         order_bys = [o["order_by"] for o in sel if o.get("order_by")]
@@ -501,6 +686,7 @@ class Shop:
             "delivery": (cart["deliver_by"] if all(o["delivery"]["on_time"] for o in sel)
                          else max((o["delivery"]["date"] or "" for o in sel), default=None)),
         }
+        cart["checks"] = self._checks(cart)
 
     # ------------------------------------------------------------------ the agent loop
     async def _run(self, s: Session) -> None:
@@ -519,6 +705,11 @@ class Shop:
                 tools = [{"name": t.name, "description": t.description or "",
                           "input_schema": _attr(t, "input_schema", "inputSchema")}
                          for t in listed.tools if t.name in GATE_TOOLS] + UI_TOOLS
+                if not s.ctx_loaded:  # customer context comes from the gate, not from the model's memory
+                    ctx = await self._tool(s, mcp, "get_customer_context", {})
+                    first = s.llm[0]["content"]
+                    s.llm[0]["content"] = f"[Customer context from Valio's Trade Gate]\n{ctx}\n\n[Customer]\n{first}"
+                    s.ctx_loaded = True
                 for _ in range(MAX_STEPS):
                     resp = await client.beta.messages.create(
                         model=self.model, max_tokens=12000, system=system, tools=tools, messages=s.llm,
@@ -531,29 +722,81 @@ class Shop:
                             self._msg(s, "assistant", "\n\n".join(texts), notify=False)
                         s.status = "cart" if s.cart else "idle"
                         return
-                    results, ask = [], None
+                    results, pause, cart_msg = [], None, None
                     for bl in resp.content:
                         if bl.type != "tool_use":
                             continue
-                        if bl.name == "ask_customer":
-                            ask = bl
+                        if bl.name in ("ask_customer", "propose_ingredients"):
+                            if pause is None:
+                                pause = bl
+                            else:
+                                results.append({"type": "tool_result", "tool_use_id": bl.id,
+                                                "content": "Ignored: one on-screen step at a time."})
                             continue
                         content = await self._tool(s, mcp, bl.name, bl.input)
                         results.append({"type": "tool_result", "tool_use_id": bl.id, "content": content})
-                    if ask:
-                        if texts:
-                            self._msg(s, "assistant", "\n\n".join(texts), notify=False)
-                        opts = [str(o) for o in (ask.input.get("options") or [])][:4]
-                        s.question = {"text": ask.input.get("question", ""), "options": opts}
-                        self._msg(s, "question", s.question["text"], notify=False, options=opts)
-                        s.pending = {"tool_use_id": ask.id, "other_results": results}
+                        if (bl.name == "show_cart" and '"shown": true' in content and s.cart
+                                and all(ln["options"] for ln in s.cart["lines"])):
+                            cart_msg = (bl.input.get("message") or "").strip() or "Your cart is ready to review."
+                    if pause is not None and pause.name == "ask_customer":
+                        raw = pause.input.get("questions") or []
+                        qs = [{"id": str(q.get("id") or f"q{n + 1}"), "text": str(q.get("question", "")),
+                               "options": [str(o) for o in (q.get("options") or [])][:4]}
+                              for n, q in enumerate(raw[:3]) if q.get("question")]
+                        s.question = {"questions": qs}
+                        self._msg(s, "question", qs[0]["text"] if len(qs) == 1 else "A few quick questions",
+                                  notify=False, questions=qs, options=qs[0]["options"] if qs else [])
+                        s.pending = {"kind": "question", "tool_use_id": pause.id, "other_results": results}
                         s.status = "waiting"
                         return
+                    if pause is not None:
+                        self._propose(s, pause.input)
+                        s.pending = {"kind": "plan", "tool_use_id": pause.id, "other_results": results}
+                        s.status = "review"
+                        return
                     s.llm.append({"role": "user", "content": results})
+                    if cart_msg:  # the cart is on screen: end the turn here, the customer takes over
+                        self._msg(s, "assistant", cart_msg, notify=False)
+                        s.status = "cart"
+                        return
                     self._notify(s)
                 self._msg(s, "error", "I couldn't finish this request in a reasonable number of steps.",
                           notify=False)
                 s.status = "cart" if s.cart else "idle"
+
+    def _propose(self, s: Session, args: dict) -> None:
+        """Put the model's ingredient list on screen for the customer to edit and approve."""
+        recipes = {r["id"]: r for r in self.gate.buyer(s.customer_id)["profile"].get("recipes", [])}
+        dishes, src = [], {}
+        for d in args.get("dishes") or []:
+            r = recipes.get(d.get("recipe_id") or "") if d.get("source") == "recipe" else None
+            dishes.append({"name": d.get("name", ""), "portions": d.get("portions"),
+                           "source": "recipe" if r else "estimate",
+                           "recipe_name": r["name"] if r else None, "recipe_portions": r["portions"] if r else None})
+            src[d.get("name", "")] = dishes[-1]["source"]
+        items = []
+        for n, it in enumerate(args.get("items") or []):
+            try:
+                qty = float(it.get("quantity") or 0)
+            except (TypeError, ValueError):
+                qty = 0
+            if not it.get("name") or qty <= 0:
+                continue
+            items.append({"key": str(it.get("key") or f"i{n}"), "name": str(it["name"]), "quantity": qty,
+                          "unit": it.get("unit") if it.get("unit") in ("kg", "l", "pcs") else "kg",
+                          "dish": it.get("dish"), "source": src.get(it.get("dish"), "estimate"), "edited": False})
+        s.plan = {"title": args.get("title", "Ingredients"), "deliver_by": args.get("deliver_by"),
+                  "dishes": dishes, "items": items, "status": "proposed", "changes": []}
+        from_recipe = [d["recipe_name"] for d in dishes if d["source"] == "recipe"]
+        est = [d["name"] for d in dishes if d["source"] == "estimate"]
+        how = " · ".join(x for x in (
+            ("from your saved recipe" + ("s" if len(from_recipe) > 1 else "") + " " + ", ".join(from_recipe))
+            if from_recipe else "",
+            ("my estimate for " + ", ".join(est)) if est else "") if x)
+        self._msg(s, "progress", f"Drafted {len(items)} ingredients ({how})" if how
+                  else f"Drafted {len(items)} ingredients", notify=False)
+        self._msg(s, "assistant", (args.get("message") or "").strip()
+                  or "Check the quantities, change anything, then I'll find the products.", notify=False)
 
     async def _tool(self, s: Session, mcp: ClientSession, name: str, args: dict) -> str:
         if name == "show_cart":
@@ -564,10 +807,10 @@ class Shop:
             lines = await asyncio.to_thread(self._price_lines, s.customer_id, args.get("lines") or [], d)
             ref = (s.cart or {}).get("reference", "")
             s.cart = self._cart_from(args.get("title", "Your cart"), d, lines, args.get("assumptions") or [],
-                                     portions=args.get("portions"))
+                                     portions=args.get("portions"), customer_id=s.customer_id)
             s.cart["reference"] = ref
-            self._msg(s, "progress", f"Prepared the cart: {len(lines)} lines, €{s.cart['totals']['total']:,.2f} "
-                      f"excl. VAT — prices and stock checked live.", notify=False)
+            self._msg(s, "progress", f"Built the cart: {len(lines)} lines, prices and stock checked live",
+                      notify=False)
             self._notify(s)
             summary = [{"key": ln["key"], "need": ln["need"],
                         "options": [{"product_id": o["product_id"], "name": o["name"], "units": o["units"],
@@ -587,16 +830,16 @@ class Shop:
         if name == "find_products":
             try:
                 sm = json.loads(text)["summary"]
-                prog["text"] = (f"Searched {sm['catalog_size']:,} products → {sm['matched']:,} matches → "
-                                f"{sm['checked_live']} checked for live price & stock → {sm['shortlisted']} "
-                                f"candidates for {len(args.get('items') or [])} ingredients")
+                prog["text"] = (f"Searched {sm['catalog_size']:,} products → {sm['checked_live']} checked "
+                                f"live → {sm['shortlisted']} candidates")
+                prog["funnel"] = sm
             except (KeyError, ValueError, TypeError):
                 prog["text"] = label
         elif name == "get_customer_context":
             try:
                 c = json.loads(text)
-                prog["text"] = (f"Read your profile: {len(c['usual_products'])} usual products, "
-                                f"{len(c['saved_recipes'])} saved recipes, {len(c['standing_orders'])} order template(s)")
+                prog["text"] = (f"Read your profile: {len(c['saved_recipes'])} recipes, "
+                                f"{len(c['usual_products'])} usual products")
             except (KeyError, ValueError, TypeError):
                 prog["text"] = label
         else:

@@ -2,6 +2,7 @@
 (Stock vs Terminal, 999999 placeholders, cut-offs, partial stock) so results are reproducible."""
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import date, datetime, timedelta
 
@@ -221,3 +222,27 @@ def test_settings_change_resigns_mandate_and_no_change_does_not(gate):
     from trade_gate.seed import load_mandate
     m = gate.verify_mandate(B, load_mandate(B, gate.state_dir))
     assert m.limits.auto_approve_max_order_eur == 500
+
+
+def test_ingredient_list_must_be_approved_and_edits_are_recorded(gate, monkeypatch):
+    """Broad requests pause on an editable ingredient list; the customer's edits are authoritative and logged."""
+    from trade_gate.shop.assistant import Shop
+
+    shop = Shop(gate)
+    s = shop.create(B)
+    shop._propose(s, {"title": "Soup for 20", "deliver_by": MON.isoformat(),
+                      "dishes": [{"name": "Soup", "portions": 20, "source": "estimate"}],
+                      "items": [{"key": "a", "name": "cream", "quantity": 2, "unit": "l", "dish": "Soup"},
+                                {"key": "b", "name": "dill", "quantity": 0.1, "unit": "kg", "dish": "Soup"}]})
+    s.pending = {"kind": "plan", "tool_use_id": "t1", "other_results": []}
+    assert s.plan["status"] == "proposed" and s.plan["dishes"][0]["source"] == "estimate" and s.cart is None
+    monkeypatch.setattr(shop, "_start", lambda sess, coro: coro.close())  # no LLM in tests
+    shop.approve_plan(s.id, [{"key": "a", "name": "cream", "quantity": 3, "unit": "l"},
+                             {"key": None, "name": "salmon", "quantity": 2.5, "unit": "kg"}], save_recipes=["Soup"])
+    assert s.plan["status"] == "approved"
+    assert s.plan["changes"] == ["cream: 2 l → 3 l", "added salmon 2.5 kg", "removed dill"]
+    sent = json.loads(s.llm[-1]["content"][-1]["content"])
+    assert [i["quantity"] for i in sent["items"]] == [3, 2.5]
+    events = [e["event"] for e in gate.audit.entries(B, None, 0)]
+    assert "plan.approved" in events and "recipe.saved" in events
+    assert any(r["name"] == "Soup" for r in gate.buyer(B)["profile"]["recipes"])
