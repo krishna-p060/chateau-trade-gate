@@ -2,16 +2,14 @@ import { BarChart3, Check, ChevronDown, ClipboardCheck, MessageSquareText, Slide
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Toasts, cx, type ToastMsg } from '../components/ui'
 import { ApiError } from '../lib/api'
-import { eur } from '../lib/format'
 import type { Approval } from '../types'
 import { shop, useSessionStream, type SettingsIn } from './api'
 import { Approvals } from './Approvals'
-import { Cart } from './Cart'
 import { Chat } from './Chat'
-import { splitPerson } from './format'
 import { Preferences } from './Preferences'
-import type { Customer, Session } from './types'
+import type { Customer, PlanItemOut, Session } from './types'
 import { ValioView } from './ValioView'
+import { Workspace } from './Workspace'
 
 type Tab = 'assistant' | 'approvals' | 'valio' | 'preferences'
 const TABS: Tab[] = ['assistant', 'approvals', 'valio', 'preferences']
@@ -146,6 +144,10 @@ export default function ShopApp() {
     const ok = await run((sid) => shop.confirm(sid), 'Order not placed')
     if (ok) loadApprovals()
   }
+  const answers = async (a: Record<string, string>) => { await run((sid) => shop.answers(sid, a), 'Could not send your answer') }
+  const approvePlan = async (items: PlanItemOut[], save: string[]) => {
+    await run((sid) => shop.approvePlan(sid, items, save), 'Could not approve the list')
+  }
   const setReference = async (r: string) => { await run((sid) => shop.reference(sid, r), 'Could not save your reference') }
   const notify = async (key: string) => { await run((sid) => shop.notify(sid, key), 'Could not set the notification') }
   const saveTemplate = async (name: string) => {
@@ -185,20 +187,25 @@ export default function ShopApp() {
     }
   }
 
-  const approverHint = customer?.approvers?.[0] && customer.approval_limit_eur != null
-    ? `orders above ${eur(customer.approval_limit_eur, true)} go to ${splitPerson(customer.approvers[0]).name}` : undefined
+  // saved recipes and templates live on the customer: refetch when one is saved or Preferences opens
+  const savedDishes = session?.plan?.dishes?.filter((d) => d.saved).length || 0
+  useEffect(() => {
+    if (savedDishes > 0 || tab === 'preferences') reloadCustomers().catch(() => {})
+  }, [savedDishes, tab, reloadCustomers])
 
   return (
     <div className="flex h-full flex-col bg-[#f5f7fb] text-slate-800">
       <Header tab={tab} setTab={setTab} pending={approvals.length} customers={customers} customer={customer} onCustomer={setCid} />
       <main className="min-h-0 flex-1">
         {tab === 'assistant' && (
-          <div className="grid h-full grid-cols-[42fr_58fr]">
-            <section className="min-h-0 border-r border-slate-200/80 bg-[#f8fafd]">
-              <Chat session={session} customer={customer} sending={sending} onSend={send} onStanding={standing} onNew={newConversation} />
+          <div className="grid h-full grid-cols-[38fr_62fr]">
+            <section className="min-h-0 border-r border-slate-200/80 bg-white">
+              <Chat session={session} sending={sending} onSend={send} onNew={newConversation} />
             </section>
-            <section className="min-h-0 bg-[#f1f4f9]">
-              <Cart session={session} approver={approverHint} onSelect={select} onRemove={remove} onConfirm={confirm}
+            <section className="min-h-0 min-w-0 bg-[#f4f6fa]">
+              <Workspace session={session} customer={customer} sending={sending} onSend={send} onStanding={standing}
+                onAnswers={answers} onApprove={approvePlan} onNew={newConversation}
+                onSelect={select} onRemove={remove} onConfirm={confirm}
                 onReference={setReference} onSaveTemplate={saveTemplate} onNotify={notify} />
             </section>
           </div>
@@ -226,7 +233,7 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer }: {
     { id: 'preferences', label: 'Preferences', icon: SlidersHorizontal },
   ]
   return (
-    <header className="relative z-20 flex h-16 shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-6">
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-6">
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#0b2f6b] text-[15px] font-bold tracking-tight text-white shadow-sm">VA</div>
         <div className="leading-tight">

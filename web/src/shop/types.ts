@@ -30,9 +30,72 @@ export interface Customer {
   approval_limit_eur?: number | null
   approvers?: string[]
   standing_orders?: StandingOrder[]
-  recipes?: { id: string; name: string; portions?: number }[]
+  recipes?: Recipe[]
   usual_products?: { product_id: string; name: string }[]
   suggestions?: string[]
+}
+
+export interface Recipe {
+  id: string
+  name: string
+  portions?: number
+  ingredients?: { name: string; quantity?: number; unit?: string; product_id?: string; product_name?: string }[]
+}
+
+export interface Question {
+  id: string
+  text: string
+  options: string[]
+}
+
+export interface Funnel {
+  catalog_size?: number
+  matched?: number
+  checked_live?: number
+  shortlisted?: number
+}
+
+export interface PlanDish {
+  name: string
+  portions?: number | null
+  source?: 'recipe' | 'estimate' | string
+  recipe_name?: string | null
+  recipe_portions?: number | null
+  saved?: boolean
+}
+
+export interface PlanItem {
+  key: string
+  name: string
+  quantity: number
+  unit: string
+  dish?: string | null
+  source?: 'recipe' | 'estimate' | 'added' | string
+  edited?: boolean
+}
+
+export interface Plan {
+  title?: string
+  deliver_by?: string
+  status: 'proposed' | 'revising' | 'approved' | string
+  changes?: string[]
+  dishes: PlanDish[]
+  items: PlanItem[]
+}
+
+/** What the customer sends back when approving the ingredient list. */
+export interface PlanItemOut {
+  key: string | null
+  name: string
+  quantity: number
+  unit: string
+  dish: string | null
+}
+
+export interface Check {
+  id: 'spend' | 'allergens' | 'delivery' | string
+  level: 'ok' | 'warn' | 'block' | string
+  label: string
 }
 
 export type Role = 'user' | 'assistant' | 'progress' | 'question' | 'notice' | 'error'
@@ -43,6 +106,8 @@ export interface Message {
   text: string
   ts?: string
   options?: string[]
+  questions?: Question[]
+  funnel?: Funnel
   order_id?: string
   status?: string
 }
@@ -107,6 +172,7 @@ export interface Cart {
   portions?: number | null
   reference?: string
   saved_template?: string | null
+  checks?: Check[]
   lines: Line[]
   totals?: {
     total?: number
@@ -139,10 +205,12 @@ export interface OrderInfo {
 export interface Session {
   id: string
   customer_id: string
-  status: 'idle' | 'working' | 'waiting' | 'cart' | 'ordering' | 'ordered' | 'error' | string
+  status: 'idle' | 'working' | 'waiting' | 'review' | 'cart' | 'ordering' | 'ordered' | 'error' | string
+  step?: 'request' | 'ingredients' | 'products' | 'order' | string
   busy: boolean
   messages: Message[]
-  question: { text: string; options?: string[] } | null
+  question: { questions?: Question[] } | null
+  plan?: Plan | null
   cart: Cart | null
   order: OrderInfo | null
 }

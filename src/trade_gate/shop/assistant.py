@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import secrets
 import uuid
 from dataclasses import dataclass, field
@@ -32,6 +33,7 @@ from trade_gate.engine.offers import TZ, build_offer
 from trade_gate.seed import load_mandate
 from trade_gate.service import GateError, TradeGate, _candidate
 
+log = logging.getLogger("trade_gate.shop")
 GATE_TOOLS = {"find_products", "check_offers", "get_product"}  # context is loaded by the app itself
 MAX_STEPS = 14
 WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -187,6 +189,7 @@ class Session:
     question: dict | None = None
     plan: dict | None = None
     ctx_loaded: bool = False
+    system: str | None = None
     llm: list[dict] = field(default_factory=list)
     pending: dict | None = None  # {"kind": "question"|"plan", "tool_use_id": ..., "other_results": [...]}
     listeners: set = field(default_factory=set)
@@ -242,7 +245,12 @@ class Shop:
             try:
                 await coro
             except Exception as e:  # show the problem instead of hanging
-                self._msg(s, "error", f"Something went wrong: {type(e).__name__}: {e}", notify=False)
+                root = e
+                while isinstance(root, BaseExceptionGroup) and root.exceptions:
+                    root = root.exceptions[0]
+                log.exception("assistant run failed in session %s", s.id, exc_info=root)
+                self._msg(s, "error", f"Something went wrong: {type(root).__name__}: {str(root)[:300]}",
+                          notify=False)
                 s.status = "cart" if s.cart else "idle"
             self._notify(s)
         s.task = asyncio.create_task(runner())
@@ -692,10 +700,14 @@ class Shop:
     async def _run(self, s: Session) -> None:
         b = self.gate.buyer(s.customer_id)
         contact = b["profile"].get("contact") or {}
-        today = _now()
-        system = SYSTEM.format(today=f"{today:%A %d %B %Y}, {today:%H:%M} ({TIMEZONE})",
-                               contact=contact.get("name", "the customer"), role=contact.get("role", "buyer"),
-                               customer=b["name"])
+        if s.system is None:
+            # Built once per conversation: the model's earlier reasoning is bound to the exact prompt, so
+            # the prompt must not change between turns (a clock in it would change every minute).
+            today = _now()
+            s.system = SYSTEM.format(today=f"{today:%A %d %B %Y} ({TIMEZONE})",
+                                     contact=contact.get("name", "the customer"),
+                                     role=contact.get("role", "buyer"), customer=b["name"])
+        system = s.system
         client = anthropic.AsyncAnthropic()
         http = create_mcp_http_client(headers={"Authorization": f"Bearer {load_mandate(s.customer_id, self.gate.state_dir)}"})
         async with http, streamable_http_client(self.gate_url, http_client=http) as (read, write):

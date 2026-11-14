@@ -1,4 +1,4 @@
-import { FileSignature, Plus, Save, ShieldAlert, Trash2, X } from 'lucide-react'
+import { BookOpen, FileSignature, Plus, Save, ShieldAlert, Trash2, X } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Spinner } from '../components/ToolSteps'
 import { cx } from '../components/ui'
@@ -114,7 +114,34 @@ export function Preferences({ customer, onSave }: Props) {
           {saving ? <Spinner className="h-4 w-4" /> : <Save className="h-4 w-4" />} Save preferences
         </button>
       </div>
+
+      <div className="mt-8"><Recipes customer={customer} /></div>
     </div>
+  )
+}
+
+function Recipes({ customer }: { customer: Customer }) {
+  const recipes = customer.recipes || []
+  return (
+    <Section title="Your recipes" hint="Aimo scales these to the number of portions you ask for. Save new ones from the ingredient list.">
+      {recipes.length === 0 && <div className="text-[13px] text-slate-400">No saved recipes yet.</div>}
+      <div className="space-y-3">
+        {recipes.map((r) => (
+          <div key={r.id} className="rounded-xl bg-slate-50 px-4 py-3 ring-1 ring-slate-100">
+            <div className="flex items-baseline gap-2">
+              <BookOpen className="h-3.5 w-3.5 translate-y-0.5 text-[#1f4fbf]" />
+              <span className="text-[14px] font-semibold text-slate-800">{r.name}</span>
+              {r.portions != null && <span className="text-[12.5px] text-slate-500">{r.portions} portions</span>}
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5 text-[12.5px] text-slate-600">
+              {(r.ingredients || []).map((i, n) => (
+                <span key={n}>{i.name} <span className="font-medium tabular-nums text-slate-800">{i.quantity} {i.unit === 'unit' ? 'pcs' : i.unit}</span></span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </Section>
   )
 }
 

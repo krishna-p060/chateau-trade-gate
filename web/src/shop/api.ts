@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { request } from '../lib/api'
 import type { Approval, AuditEntry, Integrity, Order } from '../types'
-import type { Customer, Session } from './types'
+import type { Customer, PlanItemOut, Session } from './types'
 
 const post = <T,>(path: string, body?: unknown) =>
   request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) })
@@ -30,6 +30,9 @@ export const shop = {
   select: (sid: string, line_key: string, option: number) => post<Session>(`${S(sid)}/cart/select`, { line_key, option }),
   remove: (sid: string, line_key: string) => post<Session>(`${S(sid)}/cart/remove`, { line_key }),
   confirm: (sid: string) => post<Session>(`${S(sid)}/confirm`),
+  answers: (sid: string, answers: Record<string, string>) => post<Session>(`${S(sid)}/answers`, { answers }),
+  approvePlan: (sid: string, items: PlanItemOut[], save_recipes: string[]) =>
+    post<Session>(`${S(sid)}/plan/approve`, { items, save_recipes }),
   reference: (sid: string, reference: string) => post<Session>(`${S(sid)}/cart/reference`, { reference }),
   saveTemplate: (sid: string, name: string) => post<Session>(`${S(sid)}/save-template`, { name }),
   notify: (sid: string, line_key: string) => post<Session>(`${S(sid)}/cart/notify`, { line_key }),
