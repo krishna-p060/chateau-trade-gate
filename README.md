@@ -1,15 +1,22 @@
 # Château Trade Gate — Aimo Assistant
 
-An AI ordering assistant for Valio Aimo's webshop (food wholesale for professional kitchens), built for
-the Junction 2026 challenge *Trusted Trade Agents*. The AI builds the cart. It cannot place it: every
-order passes a gate on Valio's side that checks, in plain code, the mandate the customer signed, the
-customer's own eight weeks of purchases and Valio's live stock, then signs the order or refuses it.
+An ordering assistant for Valio Aimo's webshop (food wholesale for professional kitchens), built at
+Junction 2026 for the challenge *Trusted Trade Agents*. A chef types the event; the assistant scales the
+kitchen's own recipes, builds the cart and shows the cost per portion. Then it stops, because it cannot
+place the order. Every order passes a gate on Valio's side that knows this kitchen: the mandate it
+signed, what it bought in the last eight weeks and at what price, and Valio's stock right now.
 
-**Try to break it. No keys, no Valio data, two seconds:**
+So an agent that slips a digit and orders 20 packs of butter, where this kitchen never took more than
+2, is held for a person. So is last week's order repeated after the price rose 20%. A hazelnut bar for
+the children's hospital is refused, and nobody can approve it.
+
+**Try to break it yourself. No keys, no Valio data, two seconds:**
 
 ```bash
 uv sync && uv run python -m trade_gate.walkthrough
 ```
+
+![The webshop's "Try to break it" tab: ten attempts, ten stopped, with the gate's reason and audit entries](docs/try-to-break-it.png)
 
 | An agent tries to | The gate answers |
 |---|---|
@@ -24,10 +31,11 @@ uv sync && uv run python -m trade_gate.walkthrough
 | get an approval after the stock is gone | `REFUSED` `ORDER_LAPSED`. Closed, never confirmed, never left pending |
 | rewrite the audit entry of a blocked order to "confirmed" | `DETECTED` at that entry: the hash chain breaks there |
 
-Ten of ten stopped, each in under half a second, each with the audit entries the gate wrote. The same ten are buttons
-in the webshop's **Try to break it** tab and a test that fails if one gets through. They run on the
-bundled 51-product sample catalog and a simulated Valio; with Valio's key they run against Valio's
-17,546 products and live price and availability APIs.
+Ten of ten stopped, each in under half a second, each with the audit entries the gate wrote. The same
+ten are buttons in the webshop's **Try to break it** tab and a test that fails if one gets through.
+Without keys they run on the bundled 51-product sample catalog and a simulated Valio. They pick their
+products from the catalog at run time, so with `VALIO_API_KEY` set the same code works on Valio's
+17,546 products and live price and availability.
 
 ## The assistant, on Valio's data
 
