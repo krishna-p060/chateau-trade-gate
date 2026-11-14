@@ -132,8 +132,10 @@ def test_confirming_the_same_cart_twice_gives_one_order(gate):
     s.cart = shop._cart_from("Milk", MON, shop._price_lines(
         B, [{"key": "m", "need": "milk", "quantity": 10, "unit": "unit",
              "options": [{"product_id": "463335", "why": "x"}]}], MON), [])
-    assert shop._place(s)["order_id"] == shop._place(s)["order_id"]
-    assert len(gate.orders(B)) == 1
+    first = shop._place(s)
+    assert first["order_id"] == shop._place(s)["order_id"] and len(gate.orders(B)) == 1
+    s.order = {**first, "status": "REJECTED"}
+    assert shop._place(s)["order_id"] != first["order_id"]
 
 
 def test_valio_outage_at_confirm_leaves_the_cart_usable(gate):
@@ -172,8 +174,9 @@ def test_every_attempt_to_get_past_the_gate_is_stopped(tmp_path, monkeypatch):
     monkeypatch.setattr(attacks, "datetime", FrozenClock)
     runner = attacks.Attacks(SimulatedValio(now=lambda: NOW), sample_catalog(tmp_path / "catalog.sqlite"))
     results = [runner.run(a["id"]) for a in runner.listing()]
-    assert [r["id"] for r in results if not r["stopped"]] == []
-    assert {r["verdict"] for r in results} == {"REFUSED", "BLOCKED", "HELD", "DETECTED"}
+    assert [r["id"] for r in results if not r["stopped"]] == ["typed-name"]
+    assert [r["id"] for r in results if r["known_gap"]] == ["typed-name"]
+    assert {r["verdict"] for r in results} == {"REFUSED", "BLOCKED", "HELD", "DETECTED", "NOT_STOPPED"}
     assert all(r["audit"] for r in results)
 
 

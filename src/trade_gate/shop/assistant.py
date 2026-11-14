@@ -516,7 +516,8 @@ class Shop:
                              if ln.get("replaces") else {})})
         q = self.gate.create_quote(s.customer_id, m.agent_id, lines, date.fromisoformat(cart["deliver_by"]),
                                    note=" · ".join(x for x in (cart.get("reference"), cart.get("title")) if x))
-        cart_key = hashlib.sha256(json.dumps([s.id, cart["deliver_by"], cart.get("reference"), lines],
+        retry_of = s.order["order_id"] if s.order and s.order.get("status") == "REJECTED" else None
+        cart_key = hashlib.sha256(json.dumps([s.id, cart["deliver_by"], cart.get("reference"), lines, retry_of],
                                              sort_keys=True).encode()).hexdigest()
         o = self.gate.place_order(s.customer_id, m.agent_id, q["quote"]["quote_id"], token, cart_key,
                                   rationale=f"Cart prepared by Aimo Assistant: {cart.get('title', '')}",

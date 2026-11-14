@@ -515,7 +515,10 @@ class TradeGate:
                                         "total_price": quote["total_price"], "deliver_by": quote["deliver_by"],
                                         "lines": [{k: ln[k] for k in ("product_id", "units", "unit_price",
                                                                       "earliest_delivery")} for ln in quote["lines"]],
-                                        "approved_by": by}}, typ="order+jwt")
+                                        "approved_by": by,
+                                        "fulfilment": "Recorded and signed by the gate; not sent to an ERP "
+                                                      "(Valio's challenge APIs have no order endpoint)."}},
+                              typ="order+jwt")
         with self.lock:
             self.con.execute("UPDATE orders SET status='CONFIRMED', updated=?, confirmation_jws=? WHERE id=?",
                              (now.isoformat(timespec="seconds"), conf, oid))

@@ -175,15 +175,17 @@ did external agents do in our systems?").
 
 ## 7b. Try to break it
 
-`trade_gate/attacks.py` holds ten attempts to get an order past the gate: ten times the usual
+`trade_gate/attacks.py` holds eleven attempts to get an order past the gate. Ten are stopped: ten times the usual
 quantity, a repeat order after a 20 % price rise, a superseded mandate, an approval after the stock is
 gone, a split purchase, a negative line, a forbidden allergen, an approver the mandate does not name, a
 forged mandate, and a rewritten audit entry. The price rise and the stock-out are injected between the
-gate and its Valio client, since the mock cannot be made to change. Each runs the gate's own code on a scratch gate (same
+gate and its Valio client, since the mock cannot be made to change. The eleventh gets through and is shown as such: an agent that
+reaches the approval console and types the approver's name is accepted, because the prototype has no
+login (§9). Each runs the gate's own code on a scratch gate (same
 catalog and Valio client, its own order book) and returns what was sent, the gate's code and reason,
 and the audit entries written. `uv run python -m trade_gate.walkthrough` prints them,
 `POST /api/demo/attacks/{id}` serves them, the webshop's "Try to break it" tab shows them, and
-`tests/test_gate.py` fails if one gets through.
+`tests/test_attempts.py` fails if any outcome changes.
 
 ## 8. Assumptions (visible to agents in the manifest)
 

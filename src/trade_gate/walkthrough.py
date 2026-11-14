@@ -1,5 +1,5 @@
-"""Walkthrough on the bundled sample catalog: a saved recipe priced per portion, ten attempts to get an order
-past the gate, then the challenge's own request and six exception cases.
+"""Walkthrough on the bundled sample catalog: a saved recipe priced per portion, eleven attempts to get an order
+past the gate (ten stopped, one known gap), then the challenge's own request and six exception cases.
 
 Usage: uv run python -m trade_gate.walkthrough   (no keys, no LLM, no server; exits 1 if any outcome differs)
 """
@@ -116,8 +116,10 @@ class Walkthrough:
         self.say(f"Order {order['id']}: {order['status']}. {eur(order['total'])} is within the "
                  f"{eur(m.limits.auto_approve_max_order_eur)} the mandate lets the agent spend alone.")
         self.check("the order is CONFIRMED without a human", order["status"] == "CONFIRMED")
-        self.check("the signed confirmation verifies and names policy:auto as approver",
-                   self.confirmation(order)["approved_by"] == "policy:auto")
+        conf = self.confirmation(order)
+        self.say(f"The signed confirmation states its own reach: “{conf['fulfilment']}”")
+        self.check("the signed confirmation verifies, names policy:auto as approver and says it was not sent on",
+                   conf["approved_by"] == "policy:auto" and "not sent" in conf["fulfilment"])
 
     def b_over_the_limit(self) -> None:
         self.step("(b) Above the autonomous limit: 3,000 L goes to the named approver")
@@ -243,7 +245,7 @@ class Walkthrough:
                    order["status"] == "CONFIRMED" and order["signed"])
 
     def attempts(self) -> None:
-        self.step("Ten attempts to get an order past the gate, each on a scratch gate with its own order book")
+        self.step("Eleven scripted attempts to get an order past the gate, each on a scratch gate with its own order book")
         attacks = Attacks(self.gate.valio, self.gate.catalog)
         results = [attacks.run(a["id"]) for a in attacks.listing()]
         for n, r in enumerate(results, 1):
@@ -251,10 +253,15 @@ class Walkthrough:
             for line in r["steps"]:
                 self.say(f"    {line}")
             self.say(f"    Gate: {r['verdict']} ({r['code']}). {r['message']}")
-            self.check(f"{r['verdict'].lower()} with {r['code']}; {len(r['audit'])} audit entries, {r['ms']} ms",
-                       r["stopped"])
+            if r["known_gap"]:
+                self.check("known gap, stated: a typed approver name is accepted while the prototype has no login",
+                           not r["stopped"])
+            else:
+                self.check(f"{r['verdict'].lower()} with {r['code']}; {len(r['audit'])} audit entries, {r['ms']} ms",
+                           r["stopped"])
         stopped = sum(r["stopped"] for r in results)
-        self.say(f"{stopped} of {len(results)} attempts stopped, the slowest in {max(r['ms'] for r in results)} ms.")
+        self.say(f"{stopped} of {len(results)} attempts stopped, the slowest in {max(r['ms'] for r in results)} ms; "
+                 f"{len(results) - stopped} gets through and says why.")
         self.say("Staged, in both modes: the 20% price rise and the product that stops being deliverable are "
                  "injected between the gate and its Valio client; everything else is the gate's own answer.")
 

@@ -1,21 +1,15 @@
 # Château Trade Gate — Aimo Assistant
 
-> *Wednesday, a caterer gets a call:* "Company party for 80 on Saturday: creamy salmon pasta, green
-> salad and a dessert. 6 guests are gluten-free."
+A chef asks Valio Aimo's webshop for creamy salmon pasta for 80. The assistant scales the kitchen's own
+saved recipe, builds the cart and shows what one portion costs. The assistant cannot order: a gate on
+Valio's side (here, one process next to Valio's mock APIs) signs the order or refuses it, and it knows
+this kitchen's numbers. Built at Junction 2026 for Valio Aimo's challenge *Trusted Trade Agents*.
 
-In Valio Aimo's webshop the chef types that sentence. Aimo Assistant scales the kitchen's own saved
-recipes to 74 + 6 gluten-free portions, waits until the chef approves the ingredient list, narrows
-Valio's **17,546 products → 661 matches → 205 checked live → 88 candidates** in plain code before the AI
-chooses, builds the cart and shows what one portion costs. Built at Junction 2026 for Valio Aimo's
-challenge *Trusted Trade Agents*.
+![The saved recipe scaled to 80 portions: €258.75, €3.23 per portion, fresh or frozen salmon left to the chef](docs/keyless-cart.png)
 
-![A saved recipe scaled to 80 portions: €258.75, €3.23 per portion, fresh or frozen salmon left to the chef](docs/keyless-cart.png)
-
-*This screen needs no keys: the bundled sample catalog, and plain code in place of the model.*
-
-Then it stops, because it cannot place an order. Every order, from this assistant or from a customer's
-own agent, passes a gate on Valio's side (here: one process next to Valio's mock APIs) that knows this
-kitchen's numbers.
+*This screen needs no keys: the bundled 51-product sample catalog and its prices, with plain code doing
+the scaling in place of the model. With keys, the model takes a whole event on Valio's 17,546 products
+(further down).*
 
 | An agent tries to | The gate answers |
 |---|---|
@@ -24,38 +18,37 @@ kitchen's numbers.
 | get its order approved after the stock is gone | `REFUSED` `ORDER_LAPSED`: closed, never confirmed, never left pending |
 | keep the genuine mandate from before the customer lowered the limit | `REFUSED` `MANDATE_SUPERSEDED` |
 
-Six more: a hazelnut bar for the children's hospital (blocked, and no human can approve it), a split
-purchase (the second half held), a negative line, a forged mandate and an approver the mandate does not
-name (refused), a rewritten audit entry (detected afterwards, at that entry). Ten of ten end as they
-should: five refused, three held for a person, one blocked, one detected. No keys, no Valio data:
+Eleven scripted attempts in all. Ten end as they should: five refused, three held for a person, one
+blocked (a hazelnut bar for the children's hospital; no human can approve it), one detected afterwards
+(a rewritten audit entry). One gets through and says so: an agent that reaches the approval console and
+types the approver's name is accepted, because this prototype has no login. No keys, no Valio data:
 
 ```bash
-uv sync && uv run python -m trade_gate.walkthrough    # the cart above, the ten attempts, 7 more cases: 37 checks
+uv sync && uv run python -m trade_gate.walkthrough    # the cart above, the eleven attempts, 7 more cases: 38 checks
 ```
 
-Where this stands:
+What is not here:
 
-- Signed quotes, rules in code, human approval and a hash-chained log are here, and in most entries to
-  this challenge. They are not the claim.
-- The claim: the cart is priced per portion from the kitchen's own recipes; the gate judges an order
-  against that kitchen's own purchases and last prices, not only a spend limit; and each feature answers
-  something Valio's people told us (table below).
-- Stronger elsewhere: other entries are hosted with no setup, publish evaluation tables over several
-  models, turn a menu photo into an order, or share short stock among many agents. None of that is here.
-- Not built: Valio's mock has no order API, so an order ends signed at the gate. The webshop has no
-  login: the gate checks that an approver is named in the mandate, not who is typing. No proactive
-  selling agent; Valio's side gets signals instead (substitutes accepted, alternatives preferred, demand
-  nothing could meet). Without keys you see the gate and the plain-code cart, not the assistant, which
-  needs an Anthropic key. The demo kitchens' purchase history and recipes are synthetic.
+- Other entries to this challenge are hosted with no setup, publish evaluation tables over several
+  models, or turn a menu photo into an order. This one does none of that. Signed quotes, rules in code,
+  human approval and a hash-chained log are here as in most of them.
+- Valio's mock has no order API, so an order ends signed at the gate; the signed confirmation says so.
+- No login, and the buyer's signing key sits on the server in this prototype.
+- No proactive selling agent; Valio's side gets signals instead (substitutes accepted, alternatives
+  preferred, demand nothing could meet).
+- Without keys you see the gate and the plain-code cart, not the model, which needs an Anthropic key.
+- The demo kitchens' purchase history and recipes are synthetic.
 
 ## Try to break it
 
-![The webshop's "Try to break it" tab after "Run all": 10 of 10 attempts stopped; the first card is the butter order](docs/try-to-break-it.png)
+![The webshop's "Try to break it" tab after "Run all"; the first card is the butter order](docs/try-to-break-it.png)
 
-The ten attempts are buttons in the webshop's **Try to break it** tab, the first section of the
-walkthrough, and a test that fails if one gets through. Each runs the gate's own code on a scratch gate
-(same catalog and Valio client, its own order book) and shows what was sent, the gate's code and reason,
-and the audit entries it wrote. Two of them need a change on Valio's side that the mock cannot make (the
+The eleven attempts are buttons in the webshop's **Try to break it** tab, a section of the walkthrough,
+and a test that fails if the outcome of any of them changes. Each runs the gate's own code on a scratch
+gate (same catalog and Valio client, its own order book) and shows what was sent, the gate's code and
+reason, and the audit entries it wrote. `HELD` means the order is `PENDING_APPROVAL` (guardrail outcome
+`APPROVAL`), `BLOCKED` means `REJECTED` with no approval possible, `REFUSED` means the call itself is
+rejected with that error code. Two attempts need a change on Valio's side that the mock cannot make (the
 20% price rise, the product that stops being deliverable); those are injected between the gate and its
 Valio client, in both modes. The attempts pick their products from the catalog at run time, so with
 `VALIO_API_KEY` set the same code works on Valio's catalog and live price and availability.
@@ -65,10 +58,17 @@ and the demo mandates are in `data/demo/state/mandates/`.
 
 ## The assistant, on Valio's data
 
-It notices the customer's usual Barilla spaghetti cannot be delivered, offers fresh vs frozen salmon as
-the customer's choice, and builds a cart: priority 1 per line with alternatives when they matter
-(cheaper, usual, lower CO₂, Finnish), each with a one-line *why*, live price, stock, delivery, order-by
-time and cost per portion. The chef confirms; the gate checks the mandate and signs.
+> *Wednesday, a caterer gets a call:* "Company party for 80 on Saturday: creamy salmon pasta, green
+> salad and a dessert. 6 guests are gluten-free."
+
+With Valio's key and an Anthropic key, the chef types that sentence. Aimo Assistant reads the customer's
+saved recipes and 8 weeks of purchase history, scales the recipes to 74 + 6 gluten-free portions, waits
+until the chef approves the ingredient list, and narrows Valio's **17,546 products → 661 matches → 205
+checked live → 88 candidates** with plain code before the AI chooses. It notices the customer's usual
+Barilla spaghetti cannot be delivered, offers fresh vs frozen salmon as the customer's choice, and
+builds a cart: priority 1 per line with alternatives when they matter (cheaper, usual, lower CO₂,
+Finnish), each with a one-line *why*, live price, stock, delivery, order-by time and cost per portion.
+The chef confirms; the gate checks the mandate and signs.
 
 ## Run it
 
@@ -76,7 +76,7 @@ Without keys (sample catalog, simulated Valio; the server says so at start and i
 
 ```bash
 uv sync
-uv run python -m trade_gate.walkthrough          # 37 checks
+uv run python -m trade_gate.walkthrough          # 38 checks
 uv run pytest                                    # 34 tests, offline, fixed clock
 (cd web && npm install && npm run build)
 uv run uvicorn trade_gate.api:app --port 8400    # http://localhost:8400 opens on "Try to break it"; Assistant has the plain-code recipe cart

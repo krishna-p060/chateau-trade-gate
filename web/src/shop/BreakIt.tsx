@@ -79,6 +79,7 @@ export function BreakIt({ status }: { status: DemoStatus | null }) {
   const list = attacks || []
   const done = list.flatMap((a) => runs[a.id]?.result ?? [])
   const stopped = done.filter(isStopped).length
+  const gaps = done.filter((r) => !isStopped(r) && r.known_gap).length
   const busy = all || list.some((a) => runs[a.id]?.busy)
 
   return (
@@ -90,8 +91,8 @@ export function BreakIt({ status }: { status: DemoStatus | null }) {
         </div>
         <div className="flex shrink-0 items-center gap-3">
           {done.length > 0 && (
-            <span className={cx('text-[13px] font-semibold tabular-nums', stopped === done.length ? 'text-emerald-700' : 'text-red-600')}>
-              {t('bi_tally', { a: stopped, n: done.length })}
+            <span className={cx('text-[13px] font-semibold tabular-nums', stopped === done.length ? 'text-emerald-700' : stopped + gaps === done.length ? 'text-amber-700' : 'text-red-600')}>
+              {t('bi_tally', { a: stopped, n: done.length })}{gaps > 0 && ` · ${t('bi_gaps', { n: gaps })}`}
             </span>
           )}
           <button type="button" disabled={busy || list.length === 0} onClick={runAll}
@@ -128,8 +129,9 @@ function AttackCard({ attack, run, locked }: { attack: Attack; run?: AttackRun; 
   const r = run?.result
   const busy = !!run?.busy
   const ok = r ? isStopped(r) : true
+  const gap = !ok && !!attack.known_gap
   return (
-    <div className={cx('overflow-hidden rounded-2xl bg-white shadow-sm ring-1', ok ? 'ring-slate-200/80' : 'ring-red-300')}>
+    <div className={cx('overflow-hidden rounded-2xl bg-white shadow-sm ring-1', ok ? 'ring-slate-200/80' : gap ? 'ring-amber-300' : 'ring-red-300')}>
       <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 sm:px-6">
         <div className="min-w-0 flex-1 basis-64">
           <div className="text-[16px] font-semibold text-slate-900">{attack.title}</div>
@@ -166,15 +168,16 @@ function AttackCard({ attack, run, locked }: { attack: Attack; run?: AttackRun; 
             <div className="min-w-0 md:col-span-3">
               <div className={cx(label, 'mb-2')}>{t('bi_answer')}</div>
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
-                <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset', toneClasses[ok ? 'green' : 'red'])}>
+                <span className={cx('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset', toneClasses[ok ? 'green' : gap ? 'amber' : 'red'])}>
                   {ok ? <ShieldCheck className="h-3.5 w-3.5" /> : <ShieldX className="h-3.5 w-3.5" />}
                   {ok ? t('bi_stopped') : t('bi_not_stopped')}
                 </span>
+                {gap && <span className="text-[12.5px] font-medium text-amber-800">{t('bi_gap')}</span>}
                 {ok && <span className="text-[12.5px] font-medium text-slate-600">{VERDICTS[r.verdict] ? t(VERDICTS[r.verdict]) : r.verdict}</span>}
                 <span className="ml-auto text-[11.5px] tabular-nums text-slate-400">{t('bi_ms', { n: fNum(Math.round(r.ms)) })}</span>
               </div>
               {r.code && <div className="mt-2 break-all font-mono text-[12px] text-slate-700">{r.code}</div>}
-              <p className={cx('mt-1 text-[13px] leading-snug', ok ? 'text-slate-700' : 'text-red-700')}>{r.message}</p>
+              <p className={cx('mt-1 text-[13px] leading-snug', ok ? 'text-slate-700' : gap ? 'text-amber-900' : 'text-red-700')}>{r.message}</p>
             </div>
           </div>
 

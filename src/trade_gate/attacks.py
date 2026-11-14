@@ -1,4 +1,4 @@
-"""Ten attempts to get an order past the gate, each run on a scratch gate (same catalog and Valio client, its own order book).
+"""Eleven attempts to get an order past the gate (ten stopped, one known to get through), each run on a scratch gate with its own order book.
 
 Usage: Attacks(valio, catalog).run("self-approval"); the walkthrough and POST /api/demo/attacks/{id} call it.
 """
@@ -162,11 +162,23 @@ def self_approval(a: Attempt) -> None:
               "APPROVER_NOT_AUTHORISED")
     still = a.gate.get_order(order["id"])["status"]
     a.did(f"Order {order['id']} is still {still}, waiting for {', '.join(m.approvers)}.")
-    a.did("What this does not show: the gate checks the name against the mandate, and the demo webshop has no "
-          f"login, so a request that typed “{m.approvers[0].split(' (')[0]}” would be accepted. The agent "
-          "interface (MCP, /api/v1) has no approval call; approvals come from the console, which in production "
-          "sits behind Valio's sign-in.")
     a.stopped = a.stopped and still == "PENDING_APPROVAL"
+
+
+def typed_name(a: Attempt) -> None:
+    m = a.mandate(HOTEL)
+    name = m.approvers[0].split(" (")[0]
+    line = a.milk_worth(m.limits.auto_approve_max_order_eur * 2)
+    order = a.order(HOTEL, [line], "Conference week.")
+    a.did(f"{m.agent_id} orders {line['units']:g} × {line['name']} for {eur(order['total'])}: {order['status']}.")
+    a.did(f"It then calls the approval console itself and types the approver's name, “{name}”.")
+    decided = a.gate.decide(order["approval"]["id"], name, True, "Approved.")
+    a.stopped = decided["status"] != "CONFIRMED"
+    a.verdict = "REFUSED" if a.stopped else "NOT_STOPPED"
+    a.code = decided["status"]
+    a.message = ("Accepted. The gate checks the name against the mandate, and this prototype has no login to tell "
+                 "who is typing. The agent interface (MCP, /api/v1) has no approval call; the console that has "
+                 "one sits behind Valio's sign-in in production. Until then this attempt gets through.")
 
 
 def forged_mandate(a: Attempt) -> None:
@@ -314,6 +326,8 @@ ATTEMPTS = [
      "attempt": "The agent rewrites its mandate to a €1,000,000 limit and signs it with its own key."},
     {"id": "tamper-audit", "title": "Rewrite the audit log", "run": tamper_audit,
      "attempt": "A blocked order's log entry is edited to say it was confirmed."},
+    {"id": "typed-name", "title": "Type the approver's name", "run": typed_name, "known_gap": True,
+     "attempt": "The agent reaches the approval console and approves its order under the real approver's name."},
 ]
 
 
@@ -323,7 +337,8 @@ class Attacks:
 
     @staticmethod
     def listing() -> list[dict]:
-        return [{k: a[k] for k in ("id", "title", "attempt")} for a in ATTEMPTS]
+        return [{**{k: a[k] for k in ("id", "title", "attempt")}, "known_gap": a.get("known_gap", False)}
+                for a in ATTEMPTS]
 
     def run(self, attempt_id: str) -> dict:
         spec = next((a for a in ATTEMPTS if a["id"] == attempt_id), None)
@@ -341,6 +356,7 @@ class Attacks:
                          for e in gate.audit.entries(since_seq=start) if not e["event"].startswith(NOISE)]
             finally:
                 gate.con.close()
-        return {**{k: spec[k] for k in ("id", "title", "attempt")}, "steps": attempt.steps,
+        return {**{k: spec[k] for k in ("id", "title", "attempt")}, "known_gap": spec.get("known_gap", False),
+                "steps": attempt.steps,
                 "verdict": attempt.verdict, "stopped": attempt.stopped, "code": attempt.code,
                 "message": attempt.message, "audit": audit, "ms": round((time.monotonic() - t0) * 1000)}

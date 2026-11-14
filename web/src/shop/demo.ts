@@ -13,6 +13,7 @@ export interface Attack {
   id: string
   title: string
   attempt: string
+  known_gap?: boolean
 }
 
 export type Verdict = 'REFUSED' | 'BLOCKED' | 'HELD' | 'DETECTED' | 'NOT_STOPPED'
