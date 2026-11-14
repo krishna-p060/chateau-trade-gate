@@ -76,7 +76,7 @@ uv run uvicorn trade_gate.api:app --port 8400    # gate + MCP + webshop; seeds t
 - REST docs `/docs` · manifest `/.well-known/trade-gate.json` · keys `/.well-known/jwks.json`
 - External-agent demo: `uv run python -m trade_gate.agent.buyer_agent hotel-aurora "1,000 L lactose-free milk by Monday"`
 - Reset demo state (moves the DB aside): stop the server, `uv run python -m trade_gate.reset_demo`
-- `TRADE_GATE_DEMO=1` forces the keyless mode; `TRADE_GATE_TEST_REAL_CATALOG=1 uv run pytest` runs the tests on the real catalog
+- `TRADE_GATE_DEMO=1` forces the keyless mode; the tests read `data/catalog.sqlite` when it exists, else the sample catalog
 
 ## What Valio Aimo told us, and what we built
 

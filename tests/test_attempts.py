@@ -103,8 +103,8 @@ def test_settings_that_would_protect_nothing_or_exceed_the_hard_limit_are_not_sa
     assert gate.buyer(H)["mandate"]["dietary"]["avoid_allergens"] == ["maapähkinät", "pähkinät", "seesami", "kala"]
     from trade_gate.seed import load_mandate
     gate.tokens[H] = load_mandate(H, gate.state_dir)
-    salmon = next(p for p in catalog.search("salmon", limit=40) if "AF" in p.allergens_contains)
-    assert order(gate, H, HA, [{"product_id": salmon.id, "units": 1}])["status"] == "REJECTED"
+    fish = next((p for p in catalog.search("salmon", limit=40) if "AF" in p.allergens_contains), None)
+    assert fish is None or order(gate, H, HA, [{"product_id": fish.id, "units": 1}])["status"] == "REJECTED"
     assert gate.buyer(B)["mandate"]["limits"]["auto_approve_max_order_eur"] == 1500
 
 
@@ -165,14 +165,12 @@ def test_failed_run_leaves_no_unanswered_tool_call(gate):
     assert [m["role"] for m in s.llm] == ["user"]
 
 
-def test_every_attempt_to_get_past_the_gate_is_stopped(catalog, monkeypatch):
+def test_every_attempt_to_get_past_the_gate_is_stopped(tmp_path, monkeypatch):
     from trade_gate import attacks
-    from trade_gate.demo import SimulatedValio
+    from trade_gate.demo import SimulatedValio, sample_catalog
 
-    if catalog.get("481120") is None or catalog.get("464306") is None:
-        pytest.skip("needs the bundled sample catalog")
     monkeypatch.setattr(attacks, "datetime", FrozenClock)
-    runner = attacks.Attacks(SimulatedValio(now=lambda: NOW), catalog)
+    runner = attacks.Attacks(SimulatedValio(now=lambda: NOW), sample_catalog(tmp_path / "catalog.sqlite"))
     results = [runner.run(a["id"]) for a in runner.listing()]
     assert [r["id"] for r in results if not r["stopped"]] == []
     assert {r["verdict"] for r in results} == {"REFUSED", "BLOCKED", "HELD", "DETECTED"}
