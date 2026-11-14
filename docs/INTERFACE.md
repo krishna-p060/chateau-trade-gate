@@ -146,6 +146,11 @@ Order templates (Valio's standing orders) are checked for the next delivery day:
 available and the customer allowed it, the order is confirmed automatically; otherwise substitutes are
 proposed for the missing items and the customer decides.
 
+**Without the model.** `POST /api/shop/sessions/{sid}/recipe` scales a saved recipe to a number of
+portions and prices it as a cart in plain code: the recipe's own products where it names them, else up
+to three deliverable candidates from the same shortlist, the customer's usual first. The webshop offers
+it when no Anthropic key is set.
+
 ## 6. Response logic for exceptions
 
 - **Unit conversion:** litres/kg → sales packs, respecting order multiples (`allowedLotSize`); pack
@@ -156,7 +161,8 @@ proposed for the missing items and the customer decides.
 - **Partial availability:** quote refused with the exact stock; planner proposes a split across
   in-stock products.
 - **Good / better / best:** cheapest · best value once delivery risk is priced in · highest
-  certainty and sustainability. Every ruled-out product is listed with its reason.
+  certainty and sustainability; an option whose stock Valio does not track is labelled `alternative`.
+  Every ruled-out product is listed with its reason.
 - **Substitutes:** Valio's own substitution rules (`substitutions` in the product data) plus
   catalog search under the same diet and allergen constraints; allergen rules are never relaxed.
 
@@ -169,10 +175,11 @@ did external agents do in our systems?").
 
 ## 7b. Try to break it
 
-`trade_gate/attacks.py` holds ten attempts to get an order past the gate: a forbidden allergen, an
-agent approving its own order, a forged mandate, a superseded mandate, a negative line, a split
-purchase, ten times the usual quantity, a repeat order after a 20 % price rise, an approval after the
-stock is gone, and a rewritten audit entry. Each runs the gate's own code on a scratch gate (same
+`trade_gate/attacks.py` holds ten attempts to get an order past the gate: ten times the usual
+quantity, a repeat order after a 20 % price rise, a superseded mandate, an approval after the stock is
+gone, a split purchase, a negative line, a forbidden allergen, an approver the mandate does not name, a
+forged mandate, and a rewritten audit entry. The price rise and the stock-out are injected between the
+gate and its Valio client, since the mock cannot be made to change. Each runs the gate's own code on a scratch gate (same
 catalog and Valio client, its own order book) and returns what was sent, the gate's code and reason,
 and the audit entries written. `uv run python -m trade_gate.walkthrough` prints them,
 `POST /api/demo/attacks/{id}` serves them, the webshop's "Try to break it" tab shows them, and
@@ -199,5 +206,5 @@ and the audit entries written. `uv run python -m trade_gate.walkthrough` prints 
 | SQLite state | Postgres; audit log anchored to an external timestamping service |
 | Estimated dates after cut-off | Availability API that returns the next feasible date |
 | Synthetic purchase history and recipes | Real purchase history and My Aimo recipes / margin calculator |
-| Assistant only in the webshop | Same MCP tools exposed to customers' own agents (OAuth consent per mandate) |
+| External agents present the mandate as a bearer token | OAuth consent per mandate; the assistant and customers' own agents already share the same MCP tools |
 | Payment out of scope | Agentic payment standards (x402, AP2) for card-less B2B settlement |

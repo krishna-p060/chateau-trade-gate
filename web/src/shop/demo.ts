@@ -1,6 +1,7 @@
 /** Keyless demo: /api/demo client, the status hook ShopApp reads, and the attack results kept across tab switches. */
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { ApiError, request } from '../lib/api'
+import type { Session } from './types'
 
 export interface DemoStatus {
   demo: boolean
@@ -45,6 +46,8 @@ export const demoApi = {
   status: () => request<DemoStatus>('/api/demo/status'),
   attacks: () => request<Attack[]>('/api/demo/attacks'),
   run: (id: string) => request<AttackResult>(`/api/demo/attacks/${encodeURIComponent(id)}`, { method: 'POST' }),
+  recipe: (sid: string, recipe_id: string, portions: number) =>
+    request<Session>(`/api/shop/sessions/${encodeURIComponent(sid)}/recipe`, { method: 'POST', body: JSON.stringify({ recipe_id, portions }) }),
 }
 
 const OPENED = 'aimo.breakit.opened'

@@ -1,5 +1,5 @@
-"""Walkthrough of the Trade Gate on the bundled sample catalog: the challenge's own request, six exception cases,
-then seven attempts by an agent to get an order past the gate.
+"""Walkthrough on the bundled sample catalog: a saved recipe priced per portion, ten attempts to get an order
+past the gate, then the challenge's own request and six exception cases.
 
 Usage: uv run python -m trade_gate.walkthrough   (no keys, no LLM, no server; exits 1 if any outcome differs)
 """
@@ -26,7 +26,7 @@ from trade_gate.trust.audit import AuditLog
 from trade_gate.trust.keys import KeyPair, verify
 from trade_gate.trust.mandate import Mandate, issue
 
-HOTEL, HOSPITAL = "hotel-aurora", "espoo-childrens-hospital"
+HOTEL, HOSPITAL, CATERER = "hotel-aurora", "espoo-childrens-hospital", "kultakeittio-catering"
 SHORT_MILK, NUT_BAR, CRACKERS, CREAM = "462775", "481120", "481212", "464249"
 
 
@@ -216,24 +216,52 @@ class Walkthrough:
                    not tampered["valid"] and tampered.get("broken_at_seq") == entry["seq"])
         self.check("the gate's own log is untouched", self.gate.audit.verify_chain() == intact)
 
-    def h_attempts(self) -> None:
-        self.step("(h) Seven more ways an agent could try to get an order through, each on a scratch gate")
+    def kitchen(self) -> None:
+        from trade_gate.shop.assistant import Shop
+        from trade_gate.shop.recipe_cart import recipe_cart
+
+        self.step("A kitchen's saved recipe becomes a cart, in plain code: creamy salmon pasta for 80")
+        shop = Shop(self.gate)
+        s = shop.create(CATERER)
+        recipe_cart(shop, s.id, "r-salmon-pasta", 80)
+        cart, totals = s.cart, s.cart["totals"]
+        self.say(cart["assumptions"][0])
+        for ln in cart["lines"]:
+            o = ln["options"][0]
+            self.say(f"  {ln['quantity']:g} {ln['unit']} {ln['need']}: {o['units']:g} × {o['name']} = {eur(o['total'])} "
+                     f"({o['why'].lower()}"
+                     + (f"; the chef chooses, {len(ln['options']) - 1} more on screen)" if ln["decision_needed"] else ")"))
+        self.say(f"Cart: {eur(totals['total'])} excl. VAT, {eur(totals['per_portion'])} per portion, "
+                 f"{totals['co2_kg']:g} kg CO₂, order by {totals['order_by'][:16].replace('T', ' ')}.")
+        self.check("every ingredient of the recipe has a deliverable product",
+                   all(ln["options"] for ln in cart["lines"]))
+        self.check("cost per portion is the cart total divided by 80 portions",
+                   totals["per_portion"] == round(totals["total"] / 80, 2) and totals["per_portion"] > 0)
+        order = shop._place(s)
+        self.say(f"{order['confirmed_by']} confirms: order {order['order_id']} is {order['status']}, signed by the gate.")
+        self.check("the chef's confirmed cart is within the mandate and CONFIRMED",
+                   order["status"] == "CONFIRMED" and order["signed"])
+
+    def attempts(self) -> None:
+        self.step("Ten attempts to get an order past the gate, each on a scratch gate with its own order book")
         attacks = Attacks(self.gate.valio, self.gate.catalog)
-        shown = ("self-approval", "old-mandate", "negative-quantity", "split-order", "ten-times", "price-jump",
-                 "stale-approval")
-        for attempt_id in shown:
-            r = attacks.run(attempt_id)
-            self.say(f"{r['title']}.")
+        results = [attacks.run(a["id"]) for a in attacks.listing()]
+        for n, r in enumerate(results, 1):
+            self.say(f"{n}. {r['title']}.")
             for line in r["steps"]:
                 self.say(f"    {line}")
             self.say(f"    Gate: {r['verdict']} ({r['code']}). {r['message']}")
-            self.check(f"{r['title'].lower()}: {r['verdict'].lower()} with {r['code']}, "
-                       f"{len(r['audit'])} audit entries, {r['ms']} ms", r["stopped"])
+            self.check(f"{r['verdict'].lower()} with {r['code']}; {len(r['audit'])} audit entries, {r['ms']} ms",
+                       r["stopped"])
+        stopped = sum(r["stopped"] for r in results)
+        self.say(f"{stopped} of {len(results)} attempts stopped, the slowest in {max(r['ms'] for r in results)} ms.")
+        self.say("Staged, in both modes: the 20% price rise and the product that stops being deliverable are "
+                 "injected between the gate and its Valio client; everything else is the gate's own answer.")
 
     def run(self) -> int:
         print(f"Trade Gate walkthrough. {DEMO_NOTE}")
-        steps = (self.a_challenge_example, self.b_over_the_limit, self.c_forbidden_allergen, self.d_wrong_mandate,
-                 self.e_partial_stock, self.f_idempotency, self.g_audit_chain, self.h_attempts)
+        steps = (self.kitchen, self.attempts, self.a_challenge_example, self.b_over_the_limit, self.c_forbidden_allergen,
+                 self.d_wrong_mandate, self.e_partial_stock, self.f_idempotency, self.g_audit_chain)
         for run_step in steps:
             run_step()
         if self.failed:

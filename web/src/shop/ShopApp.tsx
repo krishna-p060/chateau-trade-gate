@@ -13,7 +13,7 @@ import { Workspace } from './Workspace'
 import { getLang, setLang as setLangGlobal, t, type Lang } from './i18n'
 import { ShieldAlert } from 'lucide-react'
 import { BreakIt, NoKeyNotice } from './BreakIt'
-import { useDemoStatus } from './demo'
+import { demoApi, useDemoStatus } from './demo'
 
 type Tab = 'assistant' | 'approvals' | 'valio' | 'preferences' | 'breakit'
 const TABS: Tab[] = ['assistant', 'approvals', 'valio', 'preferences', 'breakit']
@@ -232,7 +232,7 @@ export default function ShopApp() {
         {tab === 'assistant' && (
           <div className="grid h-full grid-cols-[38fr_62fr]">
             <section className="flex min-h-0 flex-col border-r border-slate-200/80 bg-white">
-              {demo?.llm === false && <NoKeyNotice onOpen={() => setTab('breakit')} />}
+              {demo?.llm === false && <NoKeyNotice onOpen={() => setTab('breakit')} recipes={customer?.recipes ?? []} onRecipe={(id, n) => run((sid) => demoApi.recipe(sid, id, n), t('err_send'))} />}
               <Chat session={session} sending={sending} onSend={send} onNew={newConversation} />
             </section>
             <section className="min-h-0 min-w-0 bg-[#f4f6fa]">

@@ -558,6 +558,18 @@ def s_insights():
 attacks = Attacks(gate.valio, gate.catalog)
 
 
+class RecipeIn(BaseModel):
+    recipe_id: str
+    portions: int
+
+
+@app.post("/api/shop/sessions/{sid}/recipe", tags=["shop"])
+def s_recipe(sid: str, body: RecipeIn):
+    """Scale a saved recipe and price it as a cart in plain code; needs no model."""
+    from trade_gate.shop.recipe_cart import recipe_cart
+    return recipe_cart(shop, sid, body.recipe_id, body.portions).snapshot()
+
+
 @app.get("/api/demo/status", tags=["demo"])
 def d_status():
     return {"demo": DEMO, "llm": bool(ANTHROPIC_API_KEY), "note": DEMO_NOTE if DEMO else ""}

@@ -175,3 +175,29 @@ def test_every_attempt_to_get_past_the_gate_is_stopped(tmp_path, monkeypatch):
     assert [r["id"] for r in results if not r["stopped"]] == []
     assert {r["verdict"] for r in results} == {"REFUSED", "BLOCKED", "HELD", "DETECTED"}
     assert all(r["audit"] for r in results)
+
+
+def test_saved_recipe_becomes_a_cart_with_cost_per_portion_without_a_model(tmp_path, monkeypatch):
+    from trade_gate.demo import SimulatedValio, sample_catalog
+    from trade_gate.seed import seed
+    from trade_gate.service import TradeGate
+    from trade_gate.shop import recipe_cart as rc
+    from trade_gate.shop.assistant import Shop
+
+    monkeypatch.setattr(rc, "datetime", FrozenClock)
+    g = TradeGate(SimulatedValio(now=lambda: NOW), sample_catalog(tmp_path / "catalog.sqlite"), state_dir=tmp_path / "s")
+    seed(g)
+    shop = Shop(g)
+    s = shop.create("kultakeittio-catering")
+    rc.recipe_cart(shop, s.id, "r-salmon-pasta", 80)
+    by_need = {ln["need"]: ln for ln in s.cart["lines"]}
+    assert by_need["spaghetti"]["options"][0]["units"] == 8 and not by_need["spaghetti"]["decision_needed"]
+    assert by_need["salmon fillet"]["decision_needed"] and len(by_need["salmon fillet"]["options"]) >= 2
+    assert all(o["delivery"]["on_time"] for ln in s.cart["lines"] for o in ln["options"])
+    totals = s.cart["totals"]
+    assert totals["per_portion"] == round(totals["total"] / 80, 2) == 3.23
+    assert s.cart["deliver_by"] == "2026-11-17" and s.status == "cart"
+    assert shop._place(s)["status"] == "CONFIRMED"
+    with pytest.raises(GateError) as e:
+        rc.recipe_cart(shop, s.id, "no-such-recipe", 80)
+    assert e.value.code == "UNKNOWN_RECIPE"

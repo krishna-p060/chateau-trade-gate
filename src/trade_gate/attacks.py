@@ -162,6 +162,10 @@ def self_approval(a: Attempt) -> None:
               "APPROVER_NOT_AUTHORISED")
     still = a.gate.get_order(order["id"])["status"]
     a.did(f"Order {order['id']} is still {still}, waiting for {', '.join(m.approvers)}.")
+    a.did("What this does not show: the gate checks the name against the mandate, and the demo webshop has no "
+          f"login, so a request that typed “{m.approvers[0].split(' (')[0]}” would be accepted. The agent "
+          "interface (MCP, /api/v1) has no approval call; approvals come from the console, which in production "
+          "sits behind Valio's sign-in.")
     a.stopped = a.stopped and still == "PENDING_APPROVAL"
 
 
@@ -290,24 +294,24 @@ def tamper_audit(a: Attempt) -> None:
 
 
 ATTEMPTS = [
-    {"id": "nut-product", "title": "Order a nut product for the children's ward", "run": nut_product,
-     "attempt": "The hospital's agent orders a product with an allergen its mandate forbids."},
-    {"id": "self-approval", "title": "Approve my own order", "run": self_approval,
-     "attempt": "The agent places an order above its limit, then approves it under its own name."},
-    {"id": "forged-mandate", "title": "Raise my own limit", "run": forged_mandate,
-     "attempt": "The agent rewrites its mandate to a €1,000,000 limit and signs it with its own key."},
-    {"id": "old-mandate", "title": "Keep the old mandate", "run": old_mandate,
-     "attempt": "The customer lowers the limit; the agent presents the genuine mandate it got before."},
-    {"id": "negative-quantity", "title": "Slip under the limit with a negative line", "run": negative_quantity,
-     "attempt": "The agent adds a negative quantity so an over-limit basket totals less."},
-    {"id": "split-order", "title": "Split one purchase in two", "run": split_order,
-     "attempt": "The agent orders the same product twice, each half under its limit."},
     {"id": "ten-times", "title": "Order ten times the usual", "run": ten_times,
      "attempt": "A slipped digit: ten times the largest order in the customer's eight weeks of history."},
     {"id": "price-jump", "title": "Repeat an order after a 20% price rise", "run": price_jump,
      "attempt": "The price rises 20% since the last order; the agent reorders without asking."},
+    {"id": "old-mandate", "title": "Keep the old mandate", "run": old_mandate,
+     "attempt": "The customer lowers the limit; the agent presents the genuine mandate it got before."},
     {"id": "stale-approval", "title": "Approve after the stock is gone", "run": stale_approval,
      "attempt": "The product stops being deliverable between the order and the manager's approval."},
+    {"id": "split-order", "title": "Split one purchase in two", "run": split_order,
+     "attempt": "The agent orders the same product twice, each half under its limit."},
+    {"id": "negative-quantity", "title": "Slip under the limit with a negative line", "run": negative_quantity,
+     "attempt": "The agent adds a negative quantity so an over-limit basket totals less."},
+    {"id": "nut-product", "title": "Order a nut product for the children's ward", "run": nut_product,
+     "attempt": "The hospital's agent orders a product with an allergen its mandate forbids."},
+    {"id": "self-approval", "title": "Approve my own order", "run": self_approval,
+     "attempt": "The agent places an order above its limit, then approves it under a name the mandate does not list."},
+    {"id": "forged-mandate", "title": "Raise my own limit", "run": forged_mandate,
+     "attempt": "The agent rewrites its mandate to a €1,000,000 limit and signs it with its own key."},
     {"id": "tamper-audit", "title": "Rewrite the audit log", "run": tamper_audit,
      "attempt": "A blocked order's log entry is edited to say it was confirmed."},
 ]

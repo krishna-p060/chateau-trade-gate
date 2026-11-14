@@ -103,6 +103,7 @@ const en = {
   bi_stopped: 'Stopped', bi_not_stopped: 'Not stopped', bi_v_refused: 'Refused', bi_v_blocked: 'Blocked', bi_v_held: 'Held for approval', bi_v_detected: 'Detected',
   bi_tally: '{a} of {n} attempts stopped', bi_load_err: 'Could not load the attempts', bi_run_err: 'The attempt did not run', bi_empty: 'This server has no attempts to run.',
   nokey_title: 'The assistant needs ANTHROPIC_API_KEY in .env.', nokey_body: 'The gate itself runs without it.',
+  nokey_recipe: 'Without the model, plain code can still scale a saved recipe into a cart with cost per portion:', nokey_portions: 'portions',
   err_session_lost: 'The server restarted', err_session_lost_body: 'A new conversation is open. Orders already placed are kept; send your request again.',
   // preferences
   prefs_title: 'Preferences', prefs_for: 'How Aimo Assistant buys for {name}.',
@@ -192,6 +193,7 @@ const fi: Record<Key, string> = {
   bi_stopped: 'Pysäytetty', bi_not_stopped: 'Ei pysäytetty', bi_v_refused: 'Evätty', bi_v_blocked: 'Estetty', bi_v_held: 'Jäi odottamaan hyväksyntää', bi_v_detected: 'Havaittu',
   bi_tally: '{a}/{n} yritystä pysäytetty', bi_load_err: 'Yrityksiä ei voitu ladata', bi_run_err: 'Yritystä ei voitu ajaa', bi_empty: 'Tällä palvelimella ei ole ajettavia yrityksiä.',
   nokey_title: 'Avustaja tarvitsee ANTHROPIC_API_KEY-avaimen .env-tiedostoon.', nokey_body: 'Portti itse toimii ilman sitä.',
+  nokey_recipe: 'Ilman mallia tavallinen koodi skaalaa silti tallennetun reseptin ostoskoriksi annoshintoineen:', nokey_portions: 'annosta',
   err_session_lost: 'Palvelin käynnistyi uudelleen', err_session_lost_body: 'Uusi keskustelu on avattu. Jo tehdyt tilaukset säilyvät; lähetä pyyntösi uudelleen.',
   prefs_title: 'Asetukset', prefs_for: 'Näin Aimo-avustaja ostaa asiakkaalle {name}.',
   prefs_explainer: 'Aimo-avustaja noudattaa näitä asetuksia. Ne allekirjoitetaan ostovaltuutukseesi, jonka Valio tarkistaa jokaisen tilauksen yhteydessä.',
