@@ -109,17 +109,22 @@ Preferences edited in the webshop re-sign the mandate and are logged (`mandate.u
 
 ## 5b. The webshop channel: Aimo Assistant
 
-1. `get_customer_context` → the assistant knows priorities, recipes, history and templates.
-2. If something essential is missing (portions, date, a dietary need) it asks one tap-able question
-   (max two per conversation); otherwise it states its assumption.
-3. Recipes are scaled (saved recipe if one matches), then **one** `find_products` call narrows the
-   catalog deterministically; the AI chooses among the shortlist using the customer's own priorities.
-4. `show_cart` (UI tool): Valio prices every option for the line's quantity; priority 1 + up to two
-   alternatives with a one-line *why*; lines that depend on taste are marked "your choice".
-5. The customer confirms → signed quote → `place_order(confirmed_by=…)` → guardrails → signed order.
-6. Signals for Valio: `signal.substitution` (accepted substitute), `signal.preference` (alternative
-   chosen over the suggestion), `signal.unmet` (need nothing could meet in time), `signal.notify`
-   (back-in-stock request).
+The customer approves at three points; the assistant never skips one:
+
+| Step | Who acts | What happens |
+|---|---|---|
+| 1. Request | Customer | A dish/menu/event ("pasta pesto for 40 on Friday") or a specific list ("5 kg onions, 2 kg penne") |
+| 1b. Questions | Customer taps | Portions, date or diets that are not stated are **asked, never guessed** (up to 3 questions, tap-able answers) |
+| 2. Ingredients | **Customer edits and approves** | Broad requests only. The list comes from the customer's **saved recipe** (scaled) or, if none matches, the assistant's **estimate** (labelled as such; can be saved as a recipe). No product search happens before approval; the approved list is authoritative and logged (`plan.approved`, with every change) |
+| 3. Products | **Customer chooses and confirms** | One `find_products` call narrows the catalog deterministically; the AI picks priority 1 per line and up to two alternatives using the customer's own priorities; lines that depend on taste are marked "choose one". Guardrail checks (spend limit, allergen rules, delivery) are shown before confirming |
+| 4. Order | Gate (+ approver) | Signed quote → `place_order(confirmed_by=…)` → guardrails → signed order, or approval by the named approver |
+
+A specific list skips step 2 (the customer already stated items and quantities). Customer context is
+loaded by the application through `get_customer_context`, not recalled by the model.
+
+Signals for Valio: `signal.substitution` (accepted substitute), `signal.preference` (alternative chosen
+over the suggestion), `signal.unmet` (need nothing could meet in time), `signal.notify` (back-in-stock
+request).
 
 Order templates (Valio's standing orders) are checked for the next delivery day: if everything is
 available and the customer allowed it, the order is confirmed automatically; otherwise substitutes are
