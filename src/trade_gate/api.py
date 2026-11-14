@@ -398,6 +398,7 @@ class SettingsIn(BaseModel):
     priorities: list[str] | None = None
     avoid_allergens: list[str] | None = None
     auto_confirm_standing_orders: bool | None = None
+    reminder: str | None = None
     approval_limit_eur: float | None = None
 
 
@@ -434,6 +435,42 @@ async def s_msg(sid: str, body: MessageIn):
 async def s_standing(sid: str, body: StandingIn):
     _need_llm()
     return shop.standing_order(sid, body.standing_order_id).snapshot()
+
+
+class RepeatIn(BaseModel):
+    source: str
+    scale: float = 1.0
+
+
+class ScaleIn(BaseModel):
+    scale: float
+
+
+class StepIn(BaseModel):
+    line_key: str
+    delta: int
+
+
+@app.get("/api/shop/customers/{cid}/reorder", tags=["shop"])
+async def s_reorder(cid: str, lang: str = "en"):
+    """The usual order (checked live), other order templates, recent orders and the weekly reminder."""
+    return await asyncio.to_thread(shop.reorder_overview, cid, lang)
+
+
+@app.post("/api/shop/sessions/{sid}/repeat", tags=["shop"])
+async def s_repeat(sid: str, body: RepeatIn):
+    """Put an order template or a past order in the cart: checked live, substitutes only where needed."""
+    return (await shop.repeat(sid, body.source, body.scale)).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/cart/scale", tags=["shop"])
+async def s_scale(sid: str, body: ScaleIn):
+    return (await shop.scale_cart(sid, body.scale)).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/cart/step", tags=["shop"])
+async def s_step(sid: str, body: StepIn):
+    return (await shop.step_line(sid, body.line_key, body.delta)).snapshot()
 
 
 @app.post("/api/shop/sessions/{sid}/cart/select", tags=["shop"])

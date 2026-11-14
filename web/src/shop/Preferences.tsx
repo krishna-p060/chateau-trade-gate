@@ -18,6 +18,7 @@ export function Preferences({ customer, onSave }: Props) {
   const [newAllergen, setNewAllergen] = useState('')
   const [limit, setLimit] = useState<string>(customer.approval_limit_eur != null ? String(customer.approval_limit_eur) : '')
   const [auto, setAuto] = useState(!!customer.settings?.auto_confirm_standing_orders)
+  const [reminder, setReminder] = useState<string>(customer.settings?.reminder || 'sms')
   const [saving, setSaving] = useState(false)
   const approver = customer.approvers?.[0] || t('your_approver')
 
@@ -34,6 +35,7 @@ export function Preferences({ customer, onSave }: Props) {
       avoid_allergens: allergens,
       approval_limit_eur: limit.trim() === '' ? null : Number(limit),
       auto_confirm_standing_orders: auto,
+      reminder,
     })
     setSaving(false)
   }
@@ -106,6 +108,17 @@ export function Preferences({ customer, onSave }: Props) {
               <span className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all', auto ? 'left-[22px]' : 'left-0.5')} />
             </button>
           </label>
+          <div className="mt-4 flex items-center justify-between gap-4 border-t border-slate-100 pt-4">
+            <span className="text-[13.5px] text-slate-700">{t('reminder_label')}</span>
+            <div role="group" aria-label={t('reminder_title')} className="flex shrink-0 rounded-lg bg-slate-100 p-0.5 text-[12.5px] font-semibold">
+              {(['sms', 'email', 'off'] as const).map((c) => (
+                <button key={c} type="button" aria-pressed={reminder === c} onClick={() => setReminder(c)}
+                  className={cx('rounded-md px-2.5 py-1 transition', reminder === c ? 'bg-white text-[#0b2f6b] shadow-sm' : 'text-slate-500 hover:text-slate-800')}>
+                  {t(c === 'sms' ? 'rem_sms' : c === 'email' ? 'rem_email' : 'rem_off')}
+                </button>
+              ))}
+            </div>
+          </div>
         </Section>
       </div>
 

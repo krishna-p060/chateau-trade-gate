@@ -1,5 +1,5 @@
 import { BarChart3, Check, ChevronDown, ClipboardCheck, MessageSquareText, SlidersHorizontal, Terminal } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Toasts, cx, type ToastMsg } from '../components/ui'
 import { ApiError } from '../lib/api'
 import type { Approval } from '../types'
@@ -7,7 +7,8 @@ import { shop, useSessionStream, type SettingsIn } from './api'
 import { Approvals } from './Approvals'
 import { Chat } from './Chat'
 import { Preferences } from './Preferences'
-import type { Customer, PlanItemOut, Session } from './types'
+import { ReminderBell } from './Reorder'
+import type { Customer, PlanItemOut, ReorderOverview, Session } from './types'
 import { ValioView } from './ValioView'
 import { Workspace } from './Workspace'
 import { getLang, setLang as setLangGlobal, t, type Lang } from './i18n'
@@ -49,6 +50,9 @@ export default function ShopApp() {
   const [toasts, setToasts] = useState<ToastMsg[]>([])
   const [lang, setLangState] = useState<Lang>(getLang)
   const sidRef = useRef<string | null>(null)
+  const [overview, setOverview] = useState<ReorderOverview | null>(null)
+  const [overviewLoading, setOverviewLoading] = useState(false)
+  const [autoUntil, setAutoUntil] = useState<number | null>(null)
 
   const toast = useCallback((tone: ToastMsg['tone'], title: string, body?: string) => {
     const id = Date.now() + Math.random()
@@ -110,6 +114,16 @@ export default function ShopApp() {
   }, [activeCid, fail])
   useSessionStream(session?.id ?? null, applySession)
 
+  // the usual order and recent orders, checked live (refreshed after each order)
+  const lastOrder = session?.order?.order_id
+  useEffect(() => {
+    let alive = true
+    setOverviewLoading(true)
+    shop.reorder(activeCid, lang).then((o) => alive && setOverview(o)).catch(() => alive && setOverview(null))
+      .finally(() => alive && setOverviewLoading(false))
+    return () => { alive = false }
+  }, [activeCid, lang, lastOrder])
+
   // approvals (badge + tab)
   const loadApprovals = useCallback(() => shop.approvals().then(setApprovals).catch(() => {}), [])
   useEffect(() => {
@@ -135,11 +149,27 @@ export default function ShopApp() {
     await run((sid) => shop.send(sid, text), t('err_send'))
     setSending(false)
   }
-  const standing = async (id: string) => {
+  // quick re-order: template or past order into the cart (no AI); "Order as usual" confirms after 5 s unless undone
+  const repeat = async (source: string, scale: number, auto: boolean) => {
+    const sid = sidRef.current
+    if (!sid) return
+    setAutoUntil(null)
+    setTab('assistant')
     setSending(true)
-    await run((sid) => shop.standingOrder(sid, id), t('err_template_check'))
+    try {
+      const s = await shop.repeat(sid, source, scale)
+      applySession(s)
+      const c = s.cart
+      const clean = !!c && !!c.repeat && c.repeat.changes === 0 && !(c.repeat.dropped || []).length
+        && !c.lines.some((l) => l.decision_needed) && !(c.checks || []).some((x) => x.level === 'block')
+      if (auto && clean) setAutoUntil(Date.now() + 5000)
+    } catch (e) {
+      fail(e, t('err_repeat'))
+    }
     setSending(false)
   }
+  const step = async (key: string, d: number) => { await run((sid) => shop.step(sid, key, d), t('err_qty')) }
+  const scaleCart = async (v: number) => { await run((sid) => shop.scale(sid, v), t('err_qty')) }
   const select = async (key: string, i: number) => { await run((sid) => shop.select(sid, key, i), t('err_option')) }
   const remove = async (key: string) => { await run((sid) => shop.remove(sid, key), t('err_remove')) }
   const confirm = async () => {
@@ -156,6 +186,18 @@ export default function ShopApp() {
     const ok = await run((sid) => shop.saveTemplate(sid, name), t('err_template_save'))
     if (ok) reloadCustomers().catch(() => {})
   }
+  // the countdown: when it runs out, place the order (the gate still checks the mandate)
+  useEffect(() => {
+    if (autoUntil === null) return
+    const id = window.setTimeout(() => { setAutoUntil(null); void confirm() }, Math.max(0, autoUntil - Date.now()))
+    return () => window.clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoUntil])
+  useEffect(() => { if (session?.status !== 'cart') setAutoUntil(null) }, [session?.status])
+  const auto = autoUntil !== null && session?.cart
+    ? { until: autoUntil, onUndo: () => setAutoUntil(null), onNow: () => { setAutoUntil(null); void confirm() } }
+    : null
+
   const newConversation = async () => {
     try {
       const s = await openSession(activeCid, true)
@@ -214,7 +256,9 @@ export default function ShopApp() {
   return (
     <div className="flex h-full flex-col bg-[#f5f7fb] text-slate-800">
       <Header tab={tab} setTab={setTab} pending={approvals.length} customers={customers} customer={customer} onCustomer={setCid}
-        lang={lang} onLang={switchLang} />
+        lang={lang} onLang={switchLang}
+        bell={<ReminderBell reminder={overview?.reminder ?? null} channel={overview?.reminder_channel || 'sms'}
+          onConfirm={(src) => void repeat(src, 1, true)} onReview={(src) => void repeat(src, 1, false)} />} />
       <main className="min-h-0 flex-1">
         {tab === 'assistant' && (
           <div className="grid h-full grid-cols-[38fr_62fr]">
@@ -222,7 +266,9 @@ export default function ShopApp() {
               <Chat session={session} sending={sending} onSend={send} onNew={newConversation} />
             </section>
             <section className="min-h-0 min-w-0 bg-[#f4f6fa]">
-              <Workspace session={session} customer={customer} sending={sending} onSend={send} onStanding={standing}
+              <Workspace session={session} customer={customer} sending={sending} onSend={send}
+                overview={overview} overviewLoading={overviewLoading} onRepeat={repeat} auto={auto}
+                onStep={step} onScale={scaleCart}
                 onAnswers={answers} onApprove={approvePlan} onNew={newConversation}
                 onSelect={select} onRemove={remove} onConfirm={confirm}
                 onReference={setReference} onSaveTemplate={saveTemplate} onNotify={notify} />
@@ -241,10 +287,10 @@ export default function ShopApp() {
 }
 
 // ------------------------------------------------------------------ header
-function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, onLang }: {
+function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, onLang, bell }: {
   tab: Tab; setTab: (t: Tab) => void; pending: number
   customers: Customer[]; customer: Customer | null; onCustomer: (id: string) => void
-  lang: Lang; onLang: (l: Lang) => void
+  lang: Lang; onLang: (l: Lang) => void; bell: ReactNode
 }) {
   const items: { id: Tab; label: string; icon: typeof BarChart3 }[] = [
     { id: 'assistant', label: t('tab_assistant'), icon: MessageSquareText },
@@ -280,6 +326,7 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, o
       </nav>
 
       <div className="ml-auto flex min-w-0 items-center gap-3">
+        {bell}
         <div role="group" aria-label={t('language')} className="flex rounded-lg bg-slate-100 p-0.5 text-[12px] font-semibold">
           {(['en', 'fi'] as Lang[]).map((l) => (
             <button key={l} type="button" onClick={() => onLang(l)} aria-pressed={lang === l}

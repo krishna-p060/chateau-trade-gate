@@ -207,6 +207,10 @@ def build_offer(p: Product, price: dict | None, avail: dict | None, *, need_qty:
             units = need_qty
         elif o.content_per_sales_unit and o.content_dim == need_dim:
             units = need_qty / o.content_per_sales_unit
+            # pack content derived from Valio's unit price is approximate: 20 kg needed of a "19.84 kg"
+            # sack is one sack, not two. Only a sliver of one pack is forgiven (1,000 L stays 51 packs).
+            if units >= 1 and units - math.floor(units) < 0.05:
+                units = math.floor(units)
         else:
             units = None
             o.add("UNIT_UNKNOWN", "blocking",

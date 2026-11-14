@@ -1,18 +1,22 @@
-import { AlertCircle, ArrowRight, CalendarClock, Check, ChevronRight, MessageSquareText, RotateCcw, ShieldCheck } from 'lucide-react'
+import { AlertCircle, ArrowRight, Check, ChevronRight, MessageSquareText, RotateCcw, ShieldCheck, Sparkles } from 'lucide-react'
 import { Fragment, useState } from 'react'
 import { Spinner } from '../components/ToolSteps'
 import { cx } from '../components/ui'
-import { fNum, fWeekdays, t, type Key } from './i18n'
-import { OrderView, Products, type CartActions } from './Cart'
+import { fNum, t, type Key } from './i18n'
+import { OrderView, Products, type AutoConfirm, type CartActions } from './Cart'
+import { QuickStart, type RepeatFn } from './Reorder'
 import { Ingredients, PlanList } from './Ingredients'
-import type { Customer, Funnel, PlanItemOut, Question, Session } from './types'
+import type { Customer, Funnel, PlanItemOut, Question, ReorderOverview, Session } from './types'
 
 interface Props extends CartActions {
   session: Session | null
   customer: Customer | null
   sending: boolean
   onSend: (text: string) => void
-  onStanding: (id: string) => void
+  overview: ReorderOverview | null
+  overviewLoading: boolean
+  onRepeat: RepeatFn
+  auto: AutoConfirm | null
   onAnswers: (answers: Record<string, string>) => Promise<void>
   onApprove: (items: PlanItemOut[], save: string[]) => Promise<void>
   onNew: () => void
@@ -38,7 +42,7 @@ export function Workspace(p: Props) {
     body = (
       <div className="flex h-full min-h-0 flex-col">
         {busy && session?.status !== 'ordering' && <WorkingBar session={session} />}
-        <div className="min-h-0 flex-1"><Products cart={cart} plan={plan} busy={busy} actions={actions} /></div>
+        <div className="min-h-0 flex-1"><Products cart={cart} plan={plan} busy={busy} actions={actions} auto={p.auto} /></div>
       </div>
     )
   } else if (plan && plan.status === 'proposed' && !busy) {
@@ -54,7 +58,7 @@ export function Workspace(p: Props) {
   } else if (busy) {
     body = <Working session={session} />
   } else {
-    body = <Start customer={customer} onSend={p.onSend} onStanding={p.onStanding} />
+    body = <Start customer={customer} onSend={p.onSend} overview={p.overview} loading={p.overviewLoading} onRepeat={p.onRepeat} busy={busy} />
   }
 
   return (
@@ -97,49 +101,36 @@ function Stepper({ current, done, skippedIngredients }: { current: number; done:
 }
 
 // ------------------------------------------------------------------ start
-function Start({ customer, onSend, onStanding }: { customer: Customer | null; onSend: (t: string) => void; onStanding: (id: string) => void }) {
+/** The usual order first (most days that is all a kitchen needs), then past orders, then the assistant. */
+function Start({ customer, onSend, overview, loading, onRepeat, busy }: {
+  customer: Customer | null; onSend: (t: string) => void; overview: ReorderOverview | null; loading: boolean
+  onRepeat: RepeatFn; busy: boolean
+}) {
   const sugg = customer?.suggestions || []
-  const templates = customer?.standing_orders || []
+  const hasRepeat = !!overview?.next || (overview?.recent?.length || 0) > 0 || loading
   return (
-    <div className="h-full overflow-y-auto"><div className="flex min-h-full items-center justify-center px-8 py-6">
-      <div className="w-full max-w-xl">
-        <h1 className="text-center text-[26px] font-semibold text-slate-900">{t('start_title')}</h1>
-        <p className="mt-1.5 text-center text-[13.5px] text-slate-500">{t('start_sub')}</p>
+    <div className="h-full overflow-y-auto"><div className="flex min-h-full justify-center px-8 py-6">
+      <div className="w-full max-w-2xl">
+        {hasRepeat && <QuickStart overview={overview} loading={loading} busy={busy} onRepeat={onRepeat} />}
 
-        <div className="mt-6 space-y-2">
-          {sugg.map((s) => (
-            <button key={s} type="button" onClick={() => onSend(s)}
-              className="group flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left text-[14.5px] font-medium text-slate-800 ring-1 ring-slate-200 transition hover:ring-2 hover:ring-[#1f4fbf]/50">
-              <span className="min-w-0 flex-1">{s}</span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#1f4fbf]" />
-            </button>
-          ))}
-        </div>
-
-        {templates.length > 0 && (
-          <div className="mt-6">
-            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wider text-slate-400">{t('your_templates')}</div>
-            <div className="space-y-2">
-              {templates.slice(0, 3).map((tp) => (
-                <div key={tp.id} className="flex items-center gap-3 rounded-xl bg-white px-4 py-2.5 ring-1 ring-slate-200">
-                  <CalendarClock className="h-5 w-5 shrink-0 text-[#0b2f6b]/70" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[14px] font-medium text-slate-800">{tp.name}</div>
-                    <div className="text-[12px] text-slate-500">{t('items_n', { n: tp.lines.length })} · {fWeekdays(tp.weekdays)}</div>
-                  </div>
-                  <button type="button" onClick={() => onStanding(tp.id)}
-                    className="shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-semibold text-[#0b2f6b] ring-1 ring-slate-200 transition hover:bg-[#eef3fc]">
-                    {t('check_next')}
-                  </button>
-                </div>
-              ))}
-            </div>
+        <div className={cx(hasRepeat ? 'mt-7' : 'mt-10')}>
+          <div className={cx('flex items-center gap-1.5', hasRepeat ? 'text-[12px] font-semibold uppercase tracking-wider text-slate-400' : 'justify-center text-[24px] font-semibold text-slate-900')}>
+            {hasRepeat && <Sparkles className="h-3.5 w-3.5" />}{hasRepeat ? t('or_cook') : t('start_title')}
           </div>
-        )}
-
-        <p className="mt-5 flex items-center justify-center gap-1.5 text-[12.5px] text-slate-400">
-          <MessageSquareText className="h-3.5 w-3.5" />{t('start_hint')}
-        </p>
+          {!hasRepeat && <p className="mt-1.5 text-center text-[13.5px] text-slate-500">{t('start_sub')}</p>}
+          <div className="mt-2 space-y-2">
+            {sugg.map((s) => (
+              <button key={s} type="button" disabled={busy} onClick={() => onSend(s)}
+                className="group flex w-full items-center gap-3 rounded-xl bg-white px-4 py-2.5 text-left text-[14px] font-medium text-slate-700 ring-1 ring-slate-200 transition hover:ring-2 hover:ring-[#1f4fbf]/50 disabled:opacity-50">
+                <span className="min-w-0 flex-1">{s}</span>
+                <ArrowRight className="h-4 w-4 shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-[#1f4fbf]" />
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 flex items-center justify-center gap-1.5 text-[12.5px] text-slate-400">
+            <MessageSquareText className="h-3.5 w-3.5" />{t('start_hint')}
+          </p>
+        </div>
       </div>
     </div></div>
   )

@@ -89,6 +89,24 @@ TEXT: dict[str, dict[str, str]] = {
     "chk_late": {"en": "{n} item(s) arrive after {day}", "fi": "{n} tuote(tta) saapuu {day} jälkeen"},
     "chk_on_time": {"en": "Everything arrives by {day}", "fi": "Kaikki saapuu viimeistään {day}"},
     "replaces_note": {"en": "Customer's own words", "fi": "Asiakkaan omin sanoin"},
+    "repeat_msg": {"en": "Order “{name}” again.", "fi": "Tilaa ”{name}” uudelleen."},
+    "past_order_of": {"en": "Order of {day}", "fi": "Tilaus {day}"},
+    "min_one": {"en": "At least one pack. Use Remove to take the line out.",
+                "fi": "Vähintään yksi pakkaus. Poista rivi Poista-painikkeella."},
+    "why_valio_sub": {"en": "Valio's suggested substitute", "fi": "Valion suosittelema korvaava tuote"},
+    "why_usual": {"en": "You have bought this before", "fi": "Olet ostanut tätä aiemmin"},
+    "why_similar": {"en": "Similar product, available", "fi": "Vastaava tuote, saatavilla"},
+    "rem_subject": {"en": "Your {name} order for {day} is ready", "fi": "Tilauksesi {name} toimitukseen {day} on valmis"},
+    "rem_text": {"en": "Hi {first}! Your usual order “{name}” for {day} is ready: {n} products, about {total}.",
+                 "fi": "Hei {first}! Tavallinen tilauksesi ”{name}” toimitukseen {day} on valmis: {n} tuotetta, "
+                       "noin {total}."},
+    "rem_all_ok": {"en": "Everything is available.", "fi": "Kaikki on saatavilla."},
+    "rem_changes_one": {"en": "One thing to check: {items} is not available this time, so I suggested a substitute.",
+                        "fi": "Yksi tarkistettava asia: {items} ei ole nyt saatavilla, joten ehdotin korvaavaa."},
+    "rem_changes_other": {"en": "{n} things to check: {items} are not available this time, so I suggested "
+                                "substitutes.",
+                          "fi": "{n} tarkistettavaa asiaa: {items} eivät ole nyt saatavilla, joten ehdotin "
+                                "korvaavia."},
 }
 
 

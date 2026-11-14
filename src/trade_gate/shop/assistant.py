@@ -33,6 +33,7 @@ from trade_gate.engine.offers import TZ, build_offer
 from trade_gate.seed import load_mandate
 from trade_gate.service import GateError, TradeGate, _candidate
 from trade_gate.shop.i18n import LANGS, LANGUAGE_RULE, day, eur, t
+from trade_gate.shop.reorder import ReorderMixin
 
 log = logging.getLogger("trade_gate.shop")
 GATE_TOOLS = {"find_products", "check_offers", "get_product"}  # context is loaded by the app itself
@@ -206,7 +207,7 @@ class Session:
                 "question": self.question, "plan": self.plan, "cart": self.cart, "order": self.order}
 
 
-class Shop:
+class Shop(ReorderMixin):
     def __init__(self, gate: TradeGate, model: str = AGENT_MODEL, gate_url: str = GATE_MCP_URL):
         self.gate, self.model, self.gate_url = gate, model, gate_url
         self.sessions: dict[str, Session] = {}

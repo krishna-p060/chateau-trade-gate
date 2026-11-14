@@ -246,3 +246,50 @@ def test_ingredient_list_must_be_approved_and_edits_are_recorded(gate, monkeypat
     events = [e["event"] for e in gate.audit.entries(B, None, 0)]
     assert "plan.approved" in events and "recipe.saved" in events
     assert any(r["name"] == "Soup" for r in gate.buyer(B)["profile"]["recipes"])
+
+
+def test_usual_order_repeats_without_ai_and_substitutes_only_what_is_missing(gate):
+    import asyncio
+    from trade_gate.shop.assistant import Shop
+    gate.valio.stock["475479"] = ("Stock", 0)  # the usual Barilla spaghetti is out
+    shop = Shop(gate)
+    ov = shop.reorder_overview("kultakeittio-catering")
+    nxt = ov["next"]
+    assert nxt["source"] == "tpl:so-tue-fri" and nxt["lines_n"] == 8 and len(nxt["problems"]) == 1
+    assert ov["reminder"]["source"] == nxt["source"] and not ov["reminder"]["ready"]
+    assert ov["recent"] and all(r["source"].startswith("past|") for r in ov["recent"])
+
+    s = shop.create("kultakeittio-catering")
+    asyncio.run(shop.repeat(s.id, nxt["source"]))
+    c = s.cart
+    subs = [ln for ln in c["lines"] if ln.get("replaces")]
+    usual = [ln for ln in c["lines"] if not ln.get("replaces")]
+    assert len(subs) == 1 and subs[0]["replaces"]["product_id"] == "475479"
+    assert all(o["product_id"] != "475479" for o in subs[0]["options"])
+    assert len(usual) == 7 and all(len(ln["options"]) == 1 for ln in usual)
+    assert c["lines"][0] is subs[0]  # what changed comes first
+
+    before = {ln["key"]: ln["options"][0]["units"] for ln in usual}
+    asyncio.run(shop.scale_cart(s.id, 2.0))
+    assert all(ln["options"][ln["selected"]]["units"] >= 2 * before[ln["key"]] for ln in usual)
+    key = usual[0]["key"]
+    u = usual[0]["options"][0]["units"]
+    asyncio.run(shop.step_line(s.id, key, -1))
+    assert usual[0]["options"][0]["units"] == u - 1
+    for ln in c["lines"]:
+        if ln.get("decision_needed"):
+            shop.select(s.id, ln["key"], 0)
+    asyncio.run(shop.confirm(s.id))
+    assert s.order["status"] in ("CONFIRMED", "PENDING_APPROVAL") and s.order["confirmed_by"]
+
+
+def test_past_order_can_be_ordered_again(gate):
+    import asyncio
+    from trade_gate.shop.assistant import Shop
+    shop = Shop(gate)
+    past = shop.reorder_overview("hotel-aurora")["recent"][0]
+    s = shop.create("hotel-aurora")
+    asyncio.run(shop.repeat(s.id, past["source"]))
+    assert s.cart["repeat"]["source"] == past["source"] and len(s.cart["lines"]) == past["lines_n"]
+    with pytest.raises(GateError):
+        asyncio.run(shop.repeat(s.id, "past|1999-01-01|nothing"))

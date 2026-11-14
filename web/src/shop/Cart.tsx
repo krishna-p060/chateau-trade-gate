@@ -1,11 +1,12 @@
 import {
-  AlertTriangle, Bell, BookmarkPlus, Check, CheckCircle2, ChevronDown, Clock, Plus, ShieldCheck, Tag, Trash2, X, XCircle,
+  AlertTriangle, Bell, BookmarkPlus, Check, CheckCircle2, ChevronDown, Clock, Minus, Plus, ShieldCheck, Tag, Trash2, X, XCircle,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Spinner } from '../components/ToolSteps'
 import { cx } from '../components/ui'
 import { cleanAllergens, cutoffText, durationText, eurDiff, isTracked, msUntil, qtyText, shortName, stockCount } from './format'
-import { fDay as day, fEur as eur, fNum as num, fPricePer, noteTexts, pname, t, tn } from './i18n'
+import { fDay as day, fEur as eur, fNum as num, fPricePer, getLang, noteTexts, pname, t, tn } from './i18n'
+import { AutoConfirmBar, ScaleChips } from './Reorder'
 import type { Cart as CartT, Check as CheckT, Line, OrderInfo, Option, Plan } from './types'
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
@@ -17,20 +18,50 @@ export interface CartActions {
   onReference: (reference: string) => Promise<void>
   onSaveTemplate: (name: string) => Promise<void>
   onNotify: (key: string) => Promise<void>
+  onStep: (key: string, delta: number) => Promise<void>
+  onScale: (scale: number) => Promise<void>
+}
+
+export interface AutoConfirm {
+  until: number
+  onUndo: () => void
+  onNow: () => void
 }
 
 // ------------------------------------------------------------------ step 3: products
-export function Products({ cart, plan, busy, actions }: { cart: CartT; plan?: Plan | null; busy: boolean; actions: CartActions }) {
+export function Products({ cart, plan, busy, actions, auto }: {
+  cart: CartT; plan?: Plan | null; busy: boolean; actions: CartActions; auto?: AutoConfirm | null
+}) {
+  const rp = cart.repeat
+  const changed = rp ? cart.lines.filter((l) => l.replaces) : []
+  const usual = rp ? cart.lines.filter((l) => !l.replaces) : cart.lines
+  const group = (title: string, tone: string) => <div className={cx('mb-1.5 mt-4 text-[12px] font-semibold uppercase tracking-wider', tone)}>{title}</div>
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className={cx('min-h-0 flex-1 overflow-y-auto px-8 py-5 transition-opacity', busy && 'pointer-events-none opacity-50')}>
         <Header cart={cart} onReference={actions.onReference} />
         {plan && <PlanSummary plan={plan} />}
-        <div className="mt-3 space-y-2">
-          {cart.lines.map((l) => <LineRow key={l.key} line={l} actions={actions} />)}
+        {rp && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <ScaleChips size="sm" value={rp.scale ?? 1} onChange={(v) => void actions.onScale(v)} disabled={busy || !!auto} />
+            {(rp.dropped?.length || 0) > 0 && (
+              <span className="flex items-center gap-1.5 text-[12.5px] text-red-700">
+                <XCircle className="h-3.5 w-3.5" />{t('dropped', { list: rp.dropped.map((d) => shortName(pname(d))).join(', ') })}
+              </span>
+            )}
+          </div>
+        )}
+        {rp && changed.length > 0 && group(t('changed_now'), 'text-amber-700')}
+        <div className={cx('space-y-2', !rp && 'mt-3')}>
+          {changed.map((l) => <LineRow key={l.key} line={l} actions={actions} repeat />)}
+        </div>
+        {rp && changed.length > 0 && usual.length > 0 && group(t('as_usual_n', { n: usual.length }), 'text-slate-400')}
+        <div className={cx('space-y-2', rp && changed.length === 0 && 'mt-3')}>
+          {usual.map((l) => <LineRow key={l.key} line={l} actions={actions} repeat={!!rp} />)}
         </div>
       </div>
-      <Footer cart={cart} busy={busy} onConfirm={actions.onConfirm} />
+      {auto ? <AutoConfirmBar until={auto.until} onUndo={auto.onUndo} onNow={auto.onNow} total={eur(cart.totals?.total)}
+        approval={(cart.checks || []).some((c) => c.level === 'warn' && c.id !== 'delivery')} /> : <Footer cart={cart} busy={busy} onConfirm={actions.onConfirm} />}
     </div>
   )
 }
@@ -104,7 +135,7 @@ function Status({ o }: { o: Option }) {
   return dot('bg-sky-500', 'text-sky-800', t('orderable'))
 }
 
-function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartActions; readOnly?: boolean }) {
+function LineRow({ line, actions, readOnly, repeat }: { line: Line; actions?: CartActions; readOnly?: boolean; repeat?: boolean }) {
   const opts = line.options || []
   const sel = opts[line.selected] ?? opts[0]
   const decide = !!line.decision_needed && !readOnly
@@ -112,6 +143,17 @@ function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartAction
   const [details, setDetails] = useState(false)
   const [pending, setPending] = useState<number | null>(null)
   const showOpts = !readOnly && opts.length > 1 && (openOpts ?? decide)
+  const [stepping, setStepping] = useState(false)
+  const needText = (getLang() === 'fi' && line.need_fi) || line.need
+  const hideNeed = !needText || (!!sel && (line.need === sel.name || needText === pname(sel))) || (!!line.replaces && line.need === line.replaces.name)
+  const showNeed = hideNeed ? '' : needText
+  const usualUnits = repeat && line.unit === 'unit' && isNum(line.base_quantity) && sel && Math.abs(line.base_quantity - sel.units) > 0.001 ? line.base_quantity : null
+  const step = async (d: number) => {
+    if (!actions) return
+    setStepping(true)
+    await actions.onStep(line.key, d)
+    setStepping(false)
+  }
 
   const choose = async (i: number) => {
     if (!actions || (i === line.selected && !decide)) return setOpenOpts(false)
@@ -127,7 +169,7 @@ function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartAction
         <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-[11.5px] text-slate-400">
-              <span className="truncate">{line.need}</span>
+              <span className="truncate">{showNeed}</span>
               {decide && <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-px font-semibold text-amber-800">{t('choose_one')}</span>}
             </div>
             {sel
@@ -136,7 +178,24 @@ function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartAction
           </div>
           {sel && (
             <>
-              <div className="shrink-0 pt-4 text-[13px] tabular-nums text-slate-500">{qtyText(sel)}</div>
+              <div className="flex shrink-0 items-center gap-1.5 pt-3">
+                {!readOnly && actions && (
+                  <button type="button" title={t('pack_less')} disabled={stepping || sel.units <= 1} onClick={() => step(-1)}
+                    className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30">
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <div className="min-w-[72px] text-center leading-tight">
+                  <div className="text-[13px] tabular-nums text-slate-600">{stepping ? <Spinner className="mx-auto h-3.5 w-3.5" /> : qtyText(sel)}</div>
+                  {usualUnits !== null && <div className="text-[10.5px] text-slate-400">{t('usual_was', { n: num(usualUnits) })}</div>}
+                </div>
+                {!readOnly && actions && (
+                  <button type="button" title={t('pack_more')} disabled={stepping} onClick={() => step(1)}
+                    className="grid h-7 w-7 place-items-center rounded-lg text-slate-500 ring-1 ring-slate-200 transition hover:bg-slate-50 hover:text-slate-900 disabled:opacity-30">
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
               <div className="w-20 shrink-0 pt-3.5 text-right text-[14.5px] font-semibold tabular-nums text-slate-900">{eur(sel.total)}</div>
             </>
           )}

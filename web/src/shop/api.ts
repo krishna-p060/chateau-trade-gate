@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { request } from '../lib/api'
 import type { Approval, AuditEntry, Integrity, Order } from '../types'
-import type { Customer, PlanItemOut, Session } from './types'
+import type { Customer, PlanItemOut, ReorderOverview, Session } from './types'
 
 const post = <T,>(path: string, body?: unknown) =>
   request<T>(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) })
@@ -19,6 +19,7 @@ export interface SettingsIn {
   avoid_allergens: string[]
   approval_limit_eur: number | null
   auto_confirm_standing_orders: boolean
+  reminder?: string
 }
 
 export const shop = {
@@ -27,6 +28,10 @@ export const shop = {
   setLang: (sid: string, lang: string) => post<Session>(`${S(sid)}/lang`, { lang }),
   session: (sid: string) => request<Session>(S(sid)),
   send: (sid: string, text: string) => post<Session>(`${S(sid)}/messages`, { text }),
+  reorder: (cid: string, lang: string) => request<ReorderOverview>(`/api/shop/customers/${encodeURIComponent(cid)}/reorder?lang=${lang}`),
+  repeat: (sid: string, source: string, scale = 1) => post<Session>(`${S(sid)}/repeat`, { source, scale }),
+  scale: (sid: string, scale: number) => post<Session>(`${S(sid)}/cart/scale`, { scale }),
+  step: (sid: string, line_key: string, delta: number) => post<Session>(`${S(sid)}/cart/step`, { line_key, delta }),
   standingOrder: (sid: string, standing_order_id: string) => post<Session>(`${S(sid)}/standing-order`, { standing_order_id }),
   select: (sid: string, line_key: string, option: number) => post<Session>(`${S(sid)}/cart/select`, { line_key, option }),
   remove: (sid: string, line_key: string) => post<Session>(`${S(sid)}/cart/remove`, { line_key }),

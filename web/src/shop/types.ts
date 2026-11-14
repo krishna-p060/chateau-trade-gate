@@ -26,7 +26,7 @@ export interface Customer {
     orders_up_to_eur_confirmed_by_contact?: number
     above_that_approved_by?: string[]
   }
-  settings?: { auto_confirm_standing_orders?: boolean }
+  settings?: { auto_confirm_standing_orders?: boolean; reminder?: 'sms' | 'email' | 'off' | string }
   approval_limit_eur?: number | null
   approvers?: string[]
   standing_orders?: StandingOrder[]
@@ -155,6 +155,10 @@ export interface Option {
 export interface Line {
   key: string
   need: string
+  need_fi?: string | null
+  base_quantity?: number
+  edited?: boolean
+  problem_why?: string | null
   dish?: string | null
   quantity?: number
   unit?: string
@@ -174,6 +178,7 @@ export interface Cart {
   portions?: number | null
   reference?: string
   saved_template?: string | null
+  repeat?: RepeatInfo | null
   checks?: Check[]
   lines: Line[]
   totals?: {
@@ -216,4 +221,52 @@ export interface Session {
   plan?: Plan | null
   cart: Cart | null
   order: OrderInfo | null
+}
+
+/** A cart made from an order template or a past order (no AI): what changed against the usual. */
+export interface RepeatInfo {
+  source: string
+  kind: 'template' | 'event' | 'order' | string
+  name: string
+  scale: number
+  changes: number
+  usual_n: number
+  dropped: { product_id: string; name: string; name_fi?: string | null; why?: string }[]
+  day?: string | null
+}
+
+/** One order template or past order, checked live for its next delivery. */
+export interface ReorderItem {
+  source: string
+  kind: 'template' | 'event' | 'order' | string
+  name: string
+  weekdays?: string[]
+  day?: string
+  deliver_by: string
+  lines_n: number
+  total: number
+  order_by?: string | null
+  ok_n: number
+  names: string[]
+  problems: { name: string; why: string }[]
+  /** Guardrails that apply even when everything is available (e.g. goes to the approver). */
+  flags?: { level: string; label: string }[]
+}
+
+export interface Reminder {
+  channel: 'sms' | 'email' | 'off' | string
+  send_at: string
+  to: string
+  source: string
+  subject: string
+  text: string
+  ready: boolean
+}
+
+export interface ReorderOverview {
+  next: ReorderItem | null
+  templates: ReorderItem[]
+  recent: ReorderItem[]
+  reminder: Reminder | null
+  reminder_channel: string
 }

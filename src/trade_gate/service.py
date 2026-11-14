@@ -638,6 +638,10 @@ class TradeGate:
             changes = {k: v for k, v in changes.items() if k != "avoid_allergens"}
         if changes.get("approval_limit_eur") == m.limits.auto_approve_max_order_eur:
             changes = {k: v for k, v in changes.items() if k != "approval_limit_eur"}
+        if "reminder" in changes and changes["reminder"] in ("sms", "email", "off") \
+                and changes["reminder"] != (prof.get("settings") or {}).get("reminder", "sms"):
+            prof.setdefault("settings", {})["reminder"] = changes["reminder"]
+            what.append(f"weekly reminder: {changes['reminder']}")
         if "auto_confirm_standing_orders" in changes:
             prof.setdefault("settings", {})["auto_confirm_standing_orders"] = bool(changes["auto_confirm_standing_orders"])
             what.append("standing-order autonomy " + ("on" if changes["auto_confirm_standing_orders"] else "off"))

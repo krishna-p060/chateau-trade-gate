@@ -30,6 +30,22 @@ Built at Junction 2026 for Valio Aimo's challenge *Trusted Trade Agents*.
 | Recipes & margins in My Aimo; carbon footprint reports | Saved recipes drive quantities; **cost per portion**; CO₂ per line and per cart |
 | Webshop: order templates, user reference, availability notifications, cut-off times | Save cart as **order template**, **your reference**, **notify me when back**, **order-by** cut-off per line |
 
+### The usual order in one tap
+
+Most days a kitchen orders what it ordered last week. The start screen leads with it:
+
+- **Your next usual order**: the order template for the next delivery day, checked live (products,
+  total, cut-off). If everything is available: **Order as usual**, then 5 seconds to undo. If
+  something is missing, only that is shown, with a substitute ready (Valio's substitute list, the
+  customer's history, kitchen-size packs first); everything else stays as usual.
+- **Order again**: any recent order (template, event, or one built with the assistant), re-checked live.
+- **Quantity buttons**: −20% / usual / +20% / +50% / ×2 for the whole order, − / + one pack per line.
+- **Weekly reminder** (preview of the SMS or email): before the cut-off the chef gets *"Your Friday
+  order is ready: 8 products, about €228. One thing to check: …"* with **Confirm** / **Review**.
+
+No AI is needed for this path (plain code, about a second); the assistant can still change the cart
+afterwards, and the gate checks the signed mandate on every order.
+
 Optional asks: delivery & sustainability comparison (reliability, stock certainty, CO₂, labels),
 substitution & exceptions (cut-offs, unknown stock, lot sizes, pack maths, late items), traceability
 (hash-chained plain-language audit log, signed quotes and confirmations).
