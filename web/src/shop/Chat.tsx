@@ -253,7 +253,7 @@ function StartHere({ customer, onSend, onStanding }: { customer: Customer; onSen
       )}
       {sos.length > 0 && (
         <div>
-          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Your standing orders</div>
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Your order templates</div>
           <div className="grid gap-2">
             {sos.map((so) => (
               <div key={so.id} className="flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 shadow-sm ring-1 ring-slate-200">
@@ -264,7 +264,7 @@ function StartHere({ customer, onSend, onStanding }: { customer: Customer; onSen
                 </div>
                 <button type="button" onClick={() => onStanding(so.id)}
                   className="shrink-0 rounded-lg bg-[#eef3fc] px-3 py-1.5 text-[12.5px] font-semibold text-[#0b2f6b] transition hover:bg-[#0b2f6b] hover:text-white">
-                  Check my standing order
+                  Check for next delivery
                 </button>
               </div>
             ))}

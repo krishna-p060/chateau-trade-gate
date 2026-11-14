@@ -49,6 +49,7 @@ export interface Message {
 
 export interface Delivery {
   date?: string | null
+  earliest?: string | null
   on_time?: boolean
   confirmed?: boolean
 }
@@ -62,6 +63,9 @@ export interface Option {
   sales_unit?: string
   unit_price?: number
   total: number
+  total_with_tax?: number | null
+  /** Valio's order cut-off ("closing time") for this product and delivery date. */
+  order_by?: string | null
   price_per?: string | null
   delivered_qty?: number
   delivery?: Delivery
@@ -91,6 +95,7 @@ export interface Line {
   replaces?: { product_id: string; name: string } | null
   selected: number
   problem?: string | null
+  notify?: boolean
   options: Option[]
 }
 
@@ -99,9 +104,15 @@ export interface Cart {
   deliver_by?: string
   assumptions?: string[]
   updated?: string
+  portions?: number | null
+  reference?: string
+  saved_template?: string | null
   lines: Line[]
   totals?: {
     total?: number
+    total_with_tax?: number | null
+    per_portion?: number | null
+    order_by?: string | null
     co2_kg?: number
     lines?: number
     late?: number
@@ -122,6 +133,7 @@ export interface OrderInfo {
   confirmed_by?: string | null
   signed?: boolean
   note?: string | null
+  reference?: string | null
 }
 
 export interface Session {

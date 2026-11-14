@@ -17,7 +17,7 @@ import jwt
 from trade_gate.catalog.codes import LABELS, allergen_name
 from trade_gate.catalog.store import Catalog
 from trade_gate.config import STATE_DIR
-from trade_gate.engine.offers import TZ, build_offer
+from trade_gate.engine.offers import TZ, _parse_dt, build_offer
 from trade_gate.engine.planner import Need, plan
 from trade_gate.trust import mandate as mandates
 from trade_gate.trust.audit import AuditLog
@@ -83,7 +83,8 @@ def _candidate(p, o, usual: dict | None, valio_sub: bool, deliver_by: date | Non
         "product_id": p.id, "name": p.name, "brand": p.brand, "pack": _pack(p, o),
         "units": o.units_to_order, "sales_unit": p.sales_unit, "unit_price": o.unit_price,
         "total": o.total_price, "total_with_tax": o.total_price_with_tax,
-        "order_by": None if o.cutoff_passed else o.closing_time, "price_per": per, "delivered_qty": o.delivered_qty,
+        "order_by": None if o.cutoff_passed or not _parse_dt(o.closing_time)
+                    else _parse_dt(o.closing_time).isoformat(timespec="minutes"), "price_per": per, "delivered_qty": o.delivered_qty,
         "delivery": {"date": planned, "earliest": o.earliest_delivery, "on_time": o.meets_deadline,
                      "confirmed": o.earliest_delivery_confirmed},
         "stock": _STOCK_TEXT.get(o.stock_status, o.stock_status)

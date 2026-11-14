@@ -66,3 +66,55 @@ export function eurDiff(v: number): string {
 export function approverOf(a: Approval, customers: Customer[]): string {
   return a.order?.approval?.approver || a.approver || customers.find((c) => c.id === a.buyer_id)?.approvers?.[0] || 'Approver'
 }
+
+const HEL = 'Europe/Helsinki'
+
+/** Parse ISO datetimes, including offsets without a colon ("+0200") that Safari rejects. */
+export function parseDt(v: string | null | undefined): Date | null {
+  if (!v) return null
+  const d = new Date(v.replace(/([+-]\d{2})(\d{2})$/, '$1:$2'))
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** ISO datetime → "Sun 15 Nov 17:00" in Finnish time. */
+export function cutoffText(v: string | null | undefined): string {
+  if (!v) return ''
+  const d = parseDt(v)
+  if (!d) return v
+  const dayPart = d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: HEL })
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: HEL })
+  return `${dayPart} ${time}`
+}
+
+/** Milliseconds until an ISO datetime (NaN if unparseable). */
+export function msUntil(v: string | null | undefined, now = Date.now()): number {
+  const d = parseDt(v)
+  return d ? d.getTime() - now : NaN
+}
+
+/** 7_800_000 → "2 h 10 min" */
+export function durationText(ms: number): string {
+  const m = Math.max(0, Math.round(ms / 60000))
+  if (m < 60) return `${m} min`
+  const h = Math.floor(m / 60)
+  if (h < 48) return `${h} h ${m % 60} min`
+  return `${Math.round(h / 24)} days`
+}
+
+/** "2026-11-18" → "18.11." (Valio's webshop date style) */
+export function fiDate(v: string | null | undefined): string {
+  const m = /^\d{4}-(\d{2})-(\d{2})/.exec(v || '')
+  return m ? `${+m[2]}.${+m[1]}.` : v || ''
+}
+
+/** "Barilla Spaghetti n.5 durum wheat pasta 1kgx15" → "Barilla Spaghetti n.5" */
+export function shortName(v: string | undefined, words = 3): string {
+  const w = (v || '').split(/\s+/).filter(Boolean)
+  return w.length > words ? w.slice(0, words).join(' ') : w.join(' ')
+}
+
+/** Number in "in stock (384)" */
+export function stockCount(stock: string | undefined): string | null {
+  const m = /\(([\d.,]+)\)/.exec(stock || '')
+  return m ? m[1] : null
+}

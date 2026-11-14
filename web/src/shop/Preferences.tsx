@@ -97,9 +97,9 @@ export function Preferences({ customer, onSave }: Props) {
           </div>
         </Section>
 
-        <Section title="Standing orders">
+        <Section title="Order templates">
           <label className="flex cursor-pointer items-center justify-between gap-4">
-            <span className="text-[13.5px] text-slate-700">Confirm my standing orders automatically when everything is available</span>
+            <span className="text-[13.5px] text-slate-700">Confirm my order templates automatically when everything is available</span>
             <button type="button" role="switch" aria-checked={auto} onClick={() => setAuto(!auto)}
               className={cx('relative h-6 w-11 shrink-0 rounded-full transition', auto ? 'bg-emerald-500' : 'bg-slate-300')}>
               <span className={cx('absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all', auto ? 'left-[22px]' : 'left-0.5')} />

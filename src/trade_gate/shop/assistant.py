@@ -65,6 +65,7 @@ How to work:
    of every line. No headings or tables.
 7. When the customer asks for a change, call show_cart again with the complete updated cart.
 
+Vocabulary: Valio Aimo calls recurring/standing orders "order templates" — always use that term.
 Rules: never invent products, prices or stock — use only tool results. Allergen rules are absolute.
 If something cannot arrive in time, say so plainly and offer the closest alternative (other product or
 date). Do not narrate your steps before tool calls; the customer sees progress automatically.

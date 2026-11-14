@@ -72,6 +72,7 @@ export default function ShopApp() {
   }, [])
 
   // customers
+  const reloadCustomers = useCallback(() => shop.customers().then(setCustomers), [])
   useEffect(() => {
     let alive = true
     const load = (n = 0) => shop.customers().then((c) => alive && setCustomers(c)).catch((e) => {
@@ -113,7 +114,7 @@ export default function ShopApp() {
   const loadApprovals = useCallback(() => shop.approvals().then(setApprovals).catch(() => {}), [])
   useEffect(() => {
     loadApprovals()
-    const id = window.setInterval(loadApprovals, 4000)
+    const id = window.setInterval(loadApprovals, 5000)
     return () => window.clearInterval(id)
   }, [loadApprovals])
 
@@ -136,7 +137,7 @@ export default function ShopApp() {
   }
   const standing = async (id: string) => {
     setSending(true)
-    await run((sid) => shop.standingOrder(sid, id), 'Could not check the standing order')
+    await run((sid) => shop.standingOrder(sid, id), 'Could not check the order template')
     setSending(false)
   }
   const select = async (key: string, i: number) => { await run((sid) => shop.select(sid, key, i), 'Could not change the option') }
@@ -144,6 +145,12 @@ export default function ShopApp() {
   const confirm = async () => {
     const ok = await run((sid) => shop.confirm(sid), 'Order not placed')
     if (ok) loadApprovals()
+  }
+  const setReference = async (r: string) => { await run((sid) => shop.reference(sid, r), 'Could not save your reference') }
+  const notify = async (key: string) => { await run((sid) => shop.notify(sid, key), 'Could not set the notification') }
+  const saveTemplate = async (name: string) => {
+    const ok = await run((sid) => shop.saveTemplate(sid, name), 'Could not save the order template')
+    if (ok) reloadCustomers().catch(() => {})
   }
   const newConversation = async () => {
     try {
@@ -191,7 +198,8 @@ export default function ShopApp() {
               <Chat session={session} customer={customer} sending={sending} onSend={send} onStanding={standing} onNew={newConversation} />
             </section>
             <section className="min-h-0 bg-[#f1f4f9]">
-              <Cart session={session} approver={approverHint} onSelect={select} onRemove={remove} onConfirm={confirm} />
+              <Cart session={session} approver={approverHint} onSelect={select} onRemove={remove} onConfirm={confirm}
+                onReference={setReference} onSaveTemplate={saveTemplate} onNotify={notify} />
             </section>
           </div>
         )}
