@@ -44,7 +44,7 @@ and prepare a cart. The customer reviews and confirms the cart; you never place 
 
 How to work:
 1. Call get_customer_context once at the start of a conversation. Use what it tells you (priorities,
-   rules, usual products, saved recipes, standing orders) instead of asking.
+   rules, usual products, saved recipes, order templates) instead of asking.
 2. If something essential is missing that would change products or quantities (number of portions, the
    date, a dietary need), ask ONE short question with ask_customer and 2-4 tap-able answers. Ask at most
    two questions in a whole conversation. Otherwise make a sensible professional assumption and state it.
@@ -93,6 +93,8 @@ UI_TOOLS = [
                 "deliver_by": {"type": "string", "description": "YYYY-MM-DD"},
                 "assumptions": {"type": "array", "items": {"type": "string"},
                                 "description": "Short assumptions the customer should know (max 4)."},
+                "portions": {"type": "integer", "description": "Total servings this cart feeds, if it is "
+                                                                "for a menu/event (shows cost per portion)."},
                 "lines": {"type": "array", "items": {
                     "type": "object",
                     "properties": {
@@ -156,7 +158,7 @@ class Shop:
         contact = b["profile"].get("contact") or {}
         self._msg(s, "assistant", f"Hi {contact.get('name', '').split(' ')[0] or 'there'}! Tell me what you're "
                   f"cooking — a menu and the number of guests is enough — and I'll prepare the cart. "
-                  f"I can also check your standing order.", notify=False)
+                  f"I can also check one of your order templates for the next delivery.", notify=False)
         self.sessions[s.id] = s
         return s
 
@@ -232,6 +234,43 @@ class Shop:
         self._notify(s)
         return s
 
+    def set_reference(self, sid: str, reference: str) -> Session:
+        s = self.get(sid)
+        if not s.cart:
+            raise GateError("NO_CART", "There is no cart yet.", 409)
+        s.cart["reference"] = reference.strip()[:80]
+        self._notify(s)
+        return s
+
+    def save_template(self, sid: str, name: str) -> Session:
+        s = self.get(sid)
+        if not s.cart or not s.cart["lines"]:
+            raise GateError("NO_CART", "There is nothing to save.", 409)
+        b = self.gate.buyer(s.customer_id)
+        who = (b["profile"].get("contact") or {}).get("name", "Customer")
+        lines = [{"product_id": ln["options"][ln["selected"]]["product_id"],
+                  "units": ln["options"][ln["selected"]]["units"]} for ln in s.cart["lines"] if ln["options"]]
+        wd = [WEEKDAYS[date.fromisoformat(s.cart["deliver_by"]).weekday()]]
+        tpl = self.gate.add_order_template(s.customer_id, name or s.cart["title"], lines, wd, by=who)
+        s.cart["saved_template"] = tpl["name"]
+        self._msg(s, "notice", f"Saved as order template “{tpl['name']}” ({len(lines)} products). "
+                  f"You'll find it under your order templates.", notify=False)
+        self._notify(s)
+        return s
+
+    def notify_when_back(self, sid: str, key: str) -> Session:
+        s = self.get(sid)
+        ln = self._line(s, key)
+        if not ln.get("replaces"):
+            raise GateError("NOT_REPLACED", "This line is not a substitute.", 409)
+        b = self.gate.buyer(s.customer_id)
+        self.gate.signal(s.customer_id, "notify",
+                         f"{b['name']} wants to be notified when {ln['replaces']['name']} is available again.",
+                         {"product": ln["replaces"]})
+        ln["notify"] = True
+        self._notify(s)
+        return s
+
     def _line(self, s: Session, key: str) -> dict:
         if not s.cart:
             raise GateError("NO_CART", "There is no cart yet.", 409)
@@ -284,7 +323,7 @@ class Shop:
                           **({"is_substitute": True, "replaces": ln["replaces"]["product_id"]}
                              if ln.get("replaces") else {})})
         q = self.gate.create_quote(s.customer_id, m.agent_id, lines, date.fromisoformat(cart["deliver_by"]),
-                                   note=cart.get("title", ""))
+                                   note=" · ".join(x for x in (cart.get("reference"), cart.get("title")) if x))
         o = self.gate.place_order(s.customer_id, m.agent_id, q["quote"]["quote_id"], token, str(uuid.uuid4()),
                                   rationale=f"Cart prepared by Aimo Assistant: {cart.get('title', '')}",
                                   confirmed_by=None if auto else who)
@@ -315,6 +354,7 @@ class Shop:
                              if "accepted by" in f["message"]],
                 "approver": approver if o["status"] == "PENDING_APPROVAL" else None,
                 "confirmed_by": None if auto else who, "signed": bool(o.get("confirmation_jws")),
+                "reference": cart.get("reference") or None,
                 "quote_signed": True}
 
     def refresh_order(self, s: Session) -> None:
@@ -336,7 +376,7 @@ class Shop:
         so = next((x for x in b["profile"].get("standing_orders", []) if x["id"] == so_id), None)
         if not so:
             raise GateError("UNKNOWN_STANDING_ORDER", f"No standing order {so_id}.", 404)
-        self._msg(s, "user", f"Check my standing order “{so['name']}”.", notify=False)
+        self._msg(s, "user", f"Check my order template “{so['name']}” for the next delivery.", notify=False)
         s.cart, s.order = None, None
         self._start(s, self._run_standing(s, b, so))
         return s
@@ -349,7 +389,7 @@ class Shop:
             d += timedelta(days=1)
         lines = await asyncio.to_thread(self._price_lines, s.customer_id,
                                         [{"key": f"so{i}", "need": "", "quantity": ln["units"], "unit": "unit",
-                                          "options": [{"product_id": ln["product_id"], "why": "Your standing order"}]}
+                                          "options": [{"product_id": ln["product_id"], "why": "From your order template"}]}
                                          for i, ln in enumerate(so["lines"])], d)
         ok, bad = [], []
         for ln, src in zip(lines, so["lines"]):
@@ -362,7 +402,7 @@ class Shop:
             else:
                 why = ln.get("problem") or ((opt or {}).get("notes") or ["not available"])[0]
                 bad.append((ln, src, name, why))
-        self._msg(s, "progress", f"Checked {len(lines)} standing-order items for {_day(d.isoformat())}: "
+        self._msg(s, "progress", f"Checked {len(lines)} order-template items for {_day(d.isoformat())}: "
                   f"{len(ok)} available, {len(bad)} with problems.", notify=False)
         auto = (b["profile"].get("settings") or {}).get("auto_confirm_standing_orders")
         if not bad:
@@ -389,7 +429,7 @@ class Shop:
                          f"{ln['options'][0]['sales_unit']} (product {ln['options'][0]['product_id']}) OK"
                          for ln in ok)
         s.llm.append({"role": "user", "content":
-                      f"[Standing order check by Valio for delivery {d.isoformat()} — '{so['name']}']\n"
+                      f"[Order template check by Valio for delivery {d.isoformat()} — '{so['name']}']\n"
                       f"Available:\n{keep}\nProblems:\n{problems}\n\n"
                       f"Find substitutes for the problem items (find_products with replaces=<product_id>, "
                       f"quantity in kg/l when the pack content is known), then show_cart with ALL lines: "
@@ -435,17 +475,24 @@ class Shop:
                         and len(opts) > 1, "replaces": rep, "selected": 0, "options": opts, "problem": problem})
         return out
 
-    def _cart_from(self, title: str, deliver_by: date, lines: list[dict], assumptions: list[str]) -> dict:
+    def _cart_from(self, title: str, deliver_by: date, lines: list[dict], assumptions: list[str],
+                   portions: int | None = None) -> dict:
         cart = {"title": title, "deliver_by": deliver_by.isoformat(), "assumptions": assumptions[:4],
-                "lines": lines, "updated": _now().isoformat(timespec="seconds")}
+                "lines": lines, "portions": portions or None, "reference": "",
+                "updated": _now().isoformat(timespec="seconds")}
         self._totals(cart)
         return cart
 
     @staticmethod
     def _totals(cart: dict) -> None:
         sel = [ln["options"][ln["selected"]] for ln in cart["lines"] if ln["options"]]
+        total = round(sum(o["total"] or 0 for o in sel), 2)
+        order_bys = [o["order_by"] for o in sel if o.get("order_by")]
         cart["totals"] = {
-            "total": round(sum(o["total"] or 0 for o in sel), 2),
+            "total": total,
+            "total_with_tax": round(sum(o.get("total_with_tax") or 0 for o in sel), 2),
+            "per_portion": round(total / cart["portions"], 2) if cart.get("portions") else None,
+            "order_by": min(order_bys) if order_bys else None,
             "co2_kg": round(sum(o["co2_kg"] or 0 for o in sel), 1),
             "lines": len(cart["lines"]),
             "late": sum(1 for o in sel if not o["delivery"]["on_time"]),
@@ -514,7 +561,10 @@ class Shop:
             except (KeyError, ValueError):
                 return json.dumps({"error": "deliver_by must be YYYY-MM-DD"})
             lines = await asyncio.to_thread(self._price_lines, s.customer_id, args.get("lines") or [], d)
-            s.cart = self._cart_from(args.get("title", "Your cart"), d, lines, args.get("assumptions") or [])
+            ref = (s.cart or {}).get("reference", "")
+            s.cart = self._cart_from(args.get("title", "Your cart"), d, lines, args.get("assumptions") or [],
+                                     portions=args.get("portions"))
+            s.cart["reference"] = ref
             self._msg(s, "progress", f"Prepared the cart: {len(lines)} lines, €{s.cart['totals']['total']:,.2f} "
                       f"excl. VAT — prices and stock checked live.", notify=False)
             self._notify(s)
@@ -545,7 +595,7 @@ class Shop:
             try:
                 c = json.loads(text)
                 prog["text"] = (f"Read your profile: {len(c['usual_products'])} usual products, "
-                                f"{len(c['saved_recipes'])} saved recipes, {len(c['standing_orders'])} standing order(s)")
+                                f"{len(c['saved_recipes'])} saved recipes, {len(c['standing_orders'])} order template(s)")
             except (KeyError, ValueError, TypeError):
                 prog["text"] = label
         else:

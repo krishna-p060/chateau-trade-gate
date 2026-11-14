@@ -427,6 +427,29 @@ async def s_confirm(sid: str):
     return (await shop.confirm(sid)).snapshot()
 
 
+class ReferenceIn(BaseModel):
+    reference: str
+
+
+class TemplateIn(BaseModel):
+    name: str = ""
+
+
+@app.post("/api/shop/sessions/{sid}/cart/reference", tags=["shop"])
+async def s_reference(sid: str, body: ReferenceIn):
+    return shop.set_reference(sid, body.reference).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/save-template", tags=["shop"])
+async def s_save_template(sid: str, body: TemplateIn):
+    return shop.save_template(sid, body.name).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/cart/notify", tags=["shop"])
+async def s_notify(sid: str, body: LineIn):
+    return shop.notify_when_back(sid, body.line_key).snapshot()
+
+
 @app.get("/api/shop/sessions/{sid}/stream", tags=["shop"])
 async def s_stream(sid: str, request: Request):
     s = shop.get(sid)

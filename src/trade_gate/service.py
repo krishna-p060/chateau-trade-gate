@@ -82,7 +82,8 @@ def _candidate(p, o, usual: dict | None, valio_sub: bool, deliver_by: date | Non
     return {
         "product_id": p.id, "name": p.name, "brand": p.brand, "pack": _pack(p, o),
         "units": o.units_to_order, "sales_unit": p.sales_unit, "unit_price": o.unit_price,
-        "total": o.total_price, "price_per": per, "delivered_qty": o.delivered_qty,
+        "total": o.total_price, "total_with_tax": o.total_price_with_tax,
+        "order_by": None if o.cutoff_passed else o.closing_time, "price_per": per, "delivered_qty": o.delivered_qty,
         "delivery": {"date": planned, "earliest": o.earliest_delivery, "on_time": o.meets_deadline,
                      "confirmed": o.earliest_delivery_confirmed},
         "stock": _STOCK_TEXT.get(o.stock_status, o.stock_status)
@@ -651,6 +652,20 @@ class TradeGate:
                                   f"mandate was re-signed by the customer.",
                           data={"changes": changes})
         return self.buyer(buyer_id)
+
+    def add_order_template(self, buyer_id: str, name: str, lines: list[dict], weekdays: list[str], by: str) -> dict:
+        """Save a cart as an order template (Valio's term for a reusable / standing order)."""
+        b = self.buyer(buyer_id)
+        prof = b["profile"]
+        tpl = {"id": _id("tpl"), "name": name.strip() or "My order template", "weekdays": weekdays,
+               "lines": [{"product_id": ln["product_id"], "units": ln["units"]} for ln in lines]}
+        prof.setdefault("standing_orders", []).append(tpl)
+        self.register_buyer(buyer_id, b["name"], b["jwk"], prof, b["mandate"])
+        self.audit.append(buyer_id=buyer_id, actor=f"human:{by}", event="template.created", ref=tpl["id"],
+                          summary=f"{by} saved order template “{tpl['name']}” ({len(lines)} products"
+                                  + (f", {'/'.join(w[:3] for w in weekdays)}" if weekdays else "") + ").",
+                          data=tpl)
+        return tpl
 
     def signal(self, buyer_id: str, kind: str, summary: str, data: dict) -> None:
         """Signals for Valio Aimo: substitutions accepted, alternatives preferred, demand we could not meet."""
