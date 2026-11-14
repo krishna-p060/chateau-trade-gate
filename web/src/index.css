@@ -54,3 +54,10 @@ body {
 .anim-out { animation: card-out 0.7s ease-in forwards; overflow: hidden; }
 .live-dot { animation: pulse-ring 1.8s infinite; }
 .flash { animation: flash 1.6s ease-out; }
+
+/* webshop: pulsing mic while listening */
+@keyframes mic-ring {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+  80%, 100% { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+}
+.live-mic { animation: mic-ring 1.4s infinite; }

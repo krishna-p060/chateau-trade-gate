@@ -274,7 +274,7 @@ class Shop:
         b = self.gate.buyer(s.customer_id)
         contact = b["profile"].get("contact") or {}
         who = f"{contact.get('name', 'Customer')} ({contact.get('role', 'buyer')})"
-        token = load_mandate(s.customer_id)
+        token = load_mandate(s.customer_id, self.gate.state_dir)
         m = self.gate.verify_mandate(s.customer_id, token)
         cart = s.cart
         lines = []
@@ -463,7 +463,7 @@ class Shop:
                                contact=contact.get("name", "the customer"), role=contact.get("role", "buyer"),
                                customer=b["name"])
         client = anthropic.AsyncAnthropic()
-        http = create_mcp_http_client(headers={"Authorization": f"Bearer {load_mandate(s.customer_id)}"})
+        http = create_mcp_http_client(headers={"Authorization": f"Bearer {load_mandate(s.customer_id, self.gate.state_dir)}"})
         async with http, streamable_http_client(self.gate_url, http_client=http) as (read, write):
             async with ClientSession(read, write) as mcp:
                 await mcp.initialize()

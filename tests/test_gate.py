@@ -180,3 +180,44 @@ def test_audit_chain_detects_tampering(gate):
     assert gate.audit.verify_chain()["valid"]
     gate.con.execute("UPDATE audit SET summary='edited' WHERE seq=1")
     assert not gate.audit.verify_chain()["valid"]
+
+
+# ------------------------------------------------------------------ webshop assistant (no LLM)
+def test_webshop_cart_over_limit_goes_to_approver_and_session_updates(gate):
+    from trade_gate.shop.assistant import Shop
+
+    shop = Shop(gate)
+    s = shop.create(B)
+    lines = shop._price_lines(B, [{"key": "milk", "need": "Lactose-free milk", "quantity": 2000, "unit": "l",
+                                   "options": [{"product_id": "464306", "why": "cheapest"}]}], MON)
+    s.cart = shop._cart_from("Conference", MON, lines, [])
+    o = shop._place(s)
+    assert o["status"] == "PENDING_APPROVAL" and o["approver"].startswith("Laura")
+    s.order = o
+    gate.decide(gate.get_order(o["order_id"])["approval"]["id"], "Laura Mäkinen (F&B Manager)", True, "ok")
+    shop.refresh_order(s)
+    assert s.order["status"] == "CONFIRMED" and s.order["signed"]
+    assert "approved" in s.messages[-1]["text"]
+
+
+def test_customer_confirmation_covers_shown_warnings_but_not_allergens(gate):
+    from trade_gate.shop.assistant import Shop
+
+    shop = Shop(gate)
+    s = shop.create(B)
+    # Terminal product: unknown stock + passed cut-off -> would need approval for an autonomous agent
+    s.cart = shop._cart_from("Cream", MON, shop._price_lines(
+        B, [{"key": "c", "need": "cream", "quantity": 2, "unit": "unit",
+             "options": [{"product_id": "463038", "why": "x"}]}], MON), [])
+    o = shop._place(s)
+    assert o["status"] == "CONFIRMED" and o["accepted"]
+
+
+def test_settings_change_resigns_mandate_and_no_change_does_not(gate):
+    before = len(gate.audit.entries(B, None, 0))
+    gate.update_settings(B, {"approval_limit_eur": 1500}, by="Jari")  # unchanged
+    assert len(gate.audit.entries(B, None, 0)) == before
+    gate.update_settings(B, {"approval_limit_eur": 500}, by="Jari")
+    from trade_gate.seed import load_mandate
+    m = gate.verify_mandate(B, load_mandate(B, gate.state_dir))
+    assert m.limits.auto_approve_max_order_eur == 500

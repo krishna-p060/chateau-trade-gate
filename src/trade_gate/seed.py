@@ -140,15 +140,15 @@ BUYERS = [
 ]
 
 
-def _key(buyer_id: str) -> KeyPair:
-    return KeyPair.load_or_create(STATE_DIR / "buyers" / f"{buyer_id}.pem", kid=f"{buyer_id}-key-1")
+def _key(buyer_id: str, state_dir=STATE_DIR) -> KeyPair:
+    return KeyPair.load_or_create(state_dir / "buyers" / f"{buyer_id}.pem", kid=f"{buyer_id}-key-1")
 
 
-def sign_mandate(m: Mandate) -> str:
+def sign_mandate(m: Mandate, state_dir=STATE_DIR) -> str:
     """Buyer signs its mandate (demo: the buyer's key lives in data/state/buyers; in production it stays
     in the buyer's browser or key store and only the public key is registered with Valio)."""
-    token = issue(m, _key(m.buyer_id))
-    path = STATE_DIR / "mandates" / f"{m.buyer_id}.jwt"
+    token = issue(m, _key(m.buyer_id, state_dir))
+    path = state_dir / "mandates" / f"{m.buyer_id}.jwt"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(token)
     return token
@@ -157,6 +157,7 @@ def sign_mandate(m: Mandate) -> str:
 def seed(gate) -> dict[str, str]:
     """Register demo customers with the gate (keeping settings already edited); return {id: mandate_jwt}."""
     out = {}
+    sd = getattr(gate, "state_dir", STATE_DIR)
     for b in BUYERS:
         existing = gate.buyer_or_none(b["id"]) if hasattr(gate, "buyer_or_none") else None
         profile = copy.deepcopy(b["profile"])
@@ -164,15 +165,15 @@ def seed(gate) -> dict[str, str]:
         if existing and existing.get("mandate"):  # keep what the customer changed in the webshop
             profile.update({k: existing["profile"][k] for k in ("priorities", "settings") if k in existing["profile"]})
             mandate = Mandate.from_credential_subject(existing["mandate"])
-        gate.register_buyer(b["id"], b["name"], _key(b["id"]).jwk(), profile, mandate.to_credential_subject())
-        out[b["id"]] = sign_mandate(mandate)
+        gate.register_buyer(b["id"], b["name"], _key(b["id"], sd).jwk(), profile, mandate.to_credential_subject())
+        out[b["id"]] = sign_mandate(mandate, sd)
     if hasattr(gate, "ensure_history"):
         gate.ensure_history(BUYERS)
     return out
 
 
-def load_mandate(buyer_id: str) -> str:
-    return (STATE_DIR / "mandates" / f"{buyer_id}.jwt").read_text().strip()
+def load_mandate(buyer_id: str, state_dir=STATE_DIR) -> str:
+    return (state_dir / "mandates" / f"{buyer_id}.jwt").read_text().strip()
 
 
 if __name__ == "__main__":

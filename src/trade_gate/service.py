@@ -102,6 +102,7 @@ def _candidate(p, o, usual: dict | None, valio_sub: bool, deliver_by: date | Non
 class TradeGate:
     def __init__(self, valio, catalog: Catalog | None = None, state_dir=STATE_DIR):
         state_dir.mkdir(parents=True, exist_ok=True)
+        self.state_dir = state_dir
         self.valio = valio
         self.catalog = catalog or Catalog()
         self.lock = threading.RLock()
@@ -623,9 +624,15 @@ class TradeGate:
         b = self.buyer(buyer_id)
         prof, m = b["profile"], mandates.Mandate.from_credential_subject(b["mandate"])
         what = []
-        if "priorities" in changes:
+        if "priorities" in changes and [p for p in changes["priorities"] if p.strip()] != prof.get("priorities"):
             prof["priorities"] = [p for p in changes["priorities"] if p.strip()]
             what.append("priorities")
+        if changes.get("auto_confirm_standing_orders") == (prof.get("settings") or {}).get("auto_confirm_standing_orders"):
+            changes = {k: v for k, v in changes.items() if k != "auto_confirm_standing_orders"}
+        if changes.get("avoid_allergens") == m.dietary.avoid_allergens:
+            changes = {k: v for k, v in changes.items() if k != "avoid_allergens"}
+        if changes.get("approval_limit_eur") == m.limits.auto_approve_max_order_eur:
+            changes = {k: v for k, v in changes.items() if k != "approval_limit_eur"}
         if "auto_confirm_standing_orders" in changes:
             prof.setdefault("settings", {})["auto_confirm_standing_orders"] = bool(changes["auto_confirm_standing_orders"])
             what.append("standing-order autonomy " + ("on" if changes["auto_confirm_standing_orders"] else "off"))
@@ -635,8 +642,10 @@ class TradeGate:
         if "approval_limit_eur" in changes:
             m.limits.auto_approve_max_order_eur = float(changes["approval_limit_eur"])
             what.append(f"approval limit €{m.limits.auto_approve_max_order_eur:,.0f}")
+        if not what:
+            return b
         self.register_buyer(buyer_id, b["name"], b["jwk"], prof, m.to_credential_subject())
-        sign_mandate(m)
+        sign_mandate(m, self.state_dir)
         self.audit.append(buyer_id=buyer_id, actor=f"human:{by}", event="mandate.updated",
                           summary=f"{by} updated settings ({'; '.join(what) or 'no change'}); the purchasing "
                                   f"mandate was re-signed by the customer.",
