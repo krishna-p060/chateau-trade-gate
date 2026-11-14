@@ -38,6 +38,9 @@ class _Cache:
         self.store[key] = (time.monotonic(), value)
 
 
+RATE_LIMIT_BLOCK_S = 31  # Valio: 429 => blocked for 30 s
+
+
 class ValioClient:
     def __init__(self, api_key: str = VALIO_API_KEY, base: str = VALIO_API_BASE,
                  customer: str = VALIO_CUSTOMER, timeout: float = 20.0):
@@ -58,9 +61,12 @@ class ValioClient:
             r = self._http.post(path, json=body)
             self.calls.append({"endpoint": path, "products": len(products), "requestedDate": body["requestedDate"],
                                "status": r.status_code, "ms": round((time.monotonic() - t0) * 1000)})
-            if r.status_code == 429 or r.status_code >= 500:
-                wait = float(r.headers.get("Retry-After", delay))
-                time.sleep(min(wait, 10))
+            if r.status_code == 429:
+                # Valio: a 429 blocks the key for 30 seconds; retrying earlier only extends the block.
+                time.sleep(max(float(r.headers.get("Retry-After", 0) or 0), RATE_LIMIT_BLOCK_S))
+                continue
+            if r.status_code >= 500:
+                time.sleep(min(delay, 10))
                 delay *= 2
                 continue
             if r.status_code != 200:

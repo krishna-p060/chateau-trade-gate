@@ -17,6 +17,8 @@ from trade_gate.trust.mandate import Mandate
 
 AUTO, APPROVAL, BLOCKED = "AUTO", "APPROVAL", "BLOCKED"
 _RANK = {AUTO: 0, APPROVAL: 1, BLOCKED: 2}
+# Warnings a person can accept by confirming the cart they were shown (not spend or allergen rules).
+ACKNOWLEDGEABLE = ("delivery.", "substitution.outside_preferences", "price.increase")
 
 
 @dataclass
@@ -41,8 +43,13 @@ class Decision:
 
 
 def evaluate(quote: dict, mandate: Mandate, catalog: Catalog, *, week_spend_eur: float = 0.0,
-             reference_prices: dict[str, float] | None = None, related_recent_eur: float = 0.0) -> Decision:
-    """Evaluate a signed-and-verified quote against the buyer's mandate."""
+             reference_prices: dict[str, float] | None = None, related_recent_eur: float = 0.0,
+             confirmed_by: str | None = None) -> Decision:
+    """Evaluate a signed-and-verified quote against the buyer's mandate.
+
+    confirmed_by: a person at the buyer reviewed this exact cart (with its warnings) and confirmed it.
+    That covers delivery, substitution and price warnings; spend limits, allergen rules and hard limits
+    still apply (e.g. a chef's cart above the limit still goes to the F&B manager)."""
     findings: list[Finding] = []
 
     def add(rule: str, outcome: str, msg: str, pid: str | None = None) -> None:
@@ -93,7 +100,7 @@ def evaluate(quote: dict, mandate: Mandate, catalog: Catalog, *, week_spend_eur:
                 f"{name} has no allergen declaration; safety cannot be verified automatically.", pid)
         if line.get("stock_status") == "unconfirmed" and mandate.delivery.unconfirmed_stock_needs_approval:
             add("delivery.unconfirmed_stock", APPROVAL,
-                f"{name} ships from a supplier warehouse with unknown stock (not guaranteed).", pid)
+                f"{name}: Valio does not track this product's stock, so delivery is not guaranteed.", pid)
         if not line.get("earliest_delivery_confirmed", True) and mandate.delivery.estimated_dates_need_approval:
             add("delivery.estimated_date", APPROVAL,
                 f"{name}: delivery date {line.get('earliest_delivery')} is our estimate after a passed "
@@ -113,5 +120,10 @@ def evaluate(quote: dict, mandate: Mandate, catalog: Catalog, *, week_spend_eur:
                 add("price.increase", APPROVAL, f"{name} costs {inc:.0f}% more than the reference price "
                     f"(€{ref[pid]:.2f} → €{line['unit_price']:.2f}).", pid)
 
+    if confirmed_by:
+        for f in findings:
+            if f.outcome == APPROVAL and f.rule.startswith(ACKNOWLEDGEABLE):
+                f.outcome = AUTO
+                f.message += f" Shown in the cart and accepted by {confirmed_by}."
     outcome = max((f.outcome for f in findings), key=_RANK.get, default=AUTO)
     return Decision(outcome, findings)

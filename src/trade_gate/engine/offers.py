@@ -15,8 +15,10 @@ from trade_gate.catalog.store import Product
 from trade_gate.config import TIMEZONE
 
 TZ = ZoneInfo(TIMEZONE)
-TERMINAL_PLACEHOLDER = 999_999           # supplier-warehouse items: real stock unknown
-UNTRACKED_PLACEHOLDER = 9_000_000_000    # stock items reported as effectively unlimited
+# Valio (Discord, 14 Nov): any availableAmount >= 999999 means "stock unknown, any quantity can be
+# ordered" (typically Terminal products from supplier warehouses). Empty schedule = not available.
+UNKNOWN_STOCK_THRESHOLD = 999_999
+TERMINAL_PLACEHOLDER = UNKNOWN_STOCK_THRESHOLD
 DEFAULT_RELIABILITY = 0.97               # used when Valio has no history for a product (flagged)
 
 
@@ -159,13 +161,12 @@ def build_offer(p: Product, price: dict | None, avail: dict | None, *, need_qty:
             sl = lines[0]
             amount = sl.get("availableAmount") or 0
             o.available_date = sl.get("availableDate")
-            if o.logistic_model == "Terminal" or amount == TERMINAL_PLACEHOLDER:
+            if o.logistic_model == "Terminal" or amount >= UNKNOWN_STOCK_THRESHOLD:
                 o.stock_status = "unconfirmed"
                 o.add("STOCK_UNCONFIRMED", "warning",
-                      "Delivered from a supplier warehouse: Valio does not know the real stock "
-                      "(999999 is a placeholder), so availability is not guaranteed.")
-            elif amount >= UNTRACKED_PLACEHOLDER:
-                o.stock_status = "untracked"
+                      ("Delivered from a supplier warehouse: " if o.logistic_model == "Terminal" else "")
+                      + "Valio does not know the real stock for this product (placeholder quantity), "
+                      "so any quantity can be ordered but delivery is not guaranteed.")
             elif amount <= 0:
                 o.stock_status = "none"
                 o.add("OUT_OF_STOCK", "blocking", "Valio stock is 0.")

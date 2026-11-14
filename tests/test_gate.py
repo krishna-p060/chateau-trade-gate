@@ -22,7 +22,7 @@ class FakeValio:
 
     def __init__(self):
         self.calls = []
-        self.stock = {"462775": ("Stock", 51), "464306": ("Stock", 9_999_999_999), "463335": ("Stock", 9_999_999_999),
+        self.stock = {"462775": ("Stock", 51), "464306": ("Stock", 5000), "463335": ("Stock", 5000),
                       "463038": ("Terminal", 999_999)}
 
     def prices(self, ids, d):
@@ -93,6 +93,17 @@ def test_plan_uses_two_batched_calls_and_explains_rejections(catalog):
     assert all(o.meets_deadline for o in res.options)
     rejected = {r["product_id"]: r["reasons"] for r in res.rejected}
     assert any("51" in " ".join(r) for r in rejected.values())  # partial stock explained
+
+
+def test_any_amount_from_999999_up_means_unknown_stock(catalog):
+    """Valio (Discord, 14 Nov): availableAmount >= 999999 = stock unknown, even on Stock products."""
+    p = catalog.get("464306")
+    for amount in (999_999, 666_666_666, 9_999_999_999):
+        avail = {"logisticModel": "Stock", "salesBlock": False, "closingTime": "2026-11-15T17:00:00+0200",
+                 "scheduleLines": [{"availableAmount": amount, "availableDate": "2026-11-16"}]}
+        o = build_offer(p, FakeValio().prices([p.id], MON)[p.id], avail, need_qty=10, need_dim="unit",
+                        deliver_by=MON, now=NOW)
+        assert o.stock_status == "unconfirmed" and any(i.code == "STOCK_UNCONFIRMED" for i in o.issues)
 
 
 # ------------------------------------------------------------------ guardrails

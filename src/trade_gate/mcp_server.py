@@ -74,6 +74,31 @@ def build_mcp(gate: TradeGate) -> MCPServer:
         return guard(run)
 
     @mcp.tool()
+    def get_customer_context(ctx: Context) -> dict[str, Any]:
+        """What Valio Aimo knows about this customer: segment, contact person, stated priorities, rules
+        (allergens, approval limit and approver), usual products from purchase history, saved recipes and
+        standing orders. Call once at the start; use it instead of asking the customer."""
+        def run():
+            m, _ = who(ctx)
+            return gate.customer_context(m.buyer_id)
+        return guard(run)
+
+    @mcp.tool()
+    def find_products(ctx: Context, items: list[dict[str, Any]], deliver_by: str) -> dict[str, Any]:
+        """Shortlist products for several ingredients at once, with live price and availability.
+        items: [{key, query (2-3 English words, e.g. 'cooking cream', 'salmon fillet'), quantity, unit
+        ('kg' | 'l' | 'unit'), optional diets ['lactose_free'|'gluten_free'|'vegan'|'vegetarian'],
+        avoid_allergens, replaces (product_id being substituted), product_ids (must-include)}].
+        Valio narrows the 17k catalog deterministically (search, diet and allergen filters, customer's usual
+        products, Valio's official substitutes), prices the packs for the quantity and checks delivery by
+        deliver_by (YYYY-MM-DD). Returns up to 7 candidates per item with pack count, total, €/kg or €/l,
+        delivery date, stock, CO2, allergens and whether the customer usually buys it."""
+        def run():
+            m, _ = who(ctx)
+            return gate.shortlist(m.buyer_id, m.agent_id, items[:25], date.fromisoformat(deliver_by))
+        return guard(run)
+
+    @mcp.tool()
     def get_product(ctx: Context, product_id: str) -> dict[str, Any]:
         """Full static details of one product: ingredients, allergens, labels, pack size, substitutes."""
         def run():

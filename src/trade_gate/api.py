@@ -212,7 +212,13 @@ def c_approvals(buyer_id: str | None = None, status: str | None = "PENDING"):
 
 @app.post("/api/console/approvals/{aid}", tags=["console"])
 def c_decide(aid: str, body: DecisionIn):
-    return gate.decide(aid, body.approver, body.approve, body.note)
+    o = gate.decide(aid, body.approver, body.approve, body.note)
+    for sess in shop.sessions.values():  # tell the webshop session that ordered it
+        if sess.order and sess.order.get("order_id") == o["id"]:
+            shop.refresh_order(sess)
+            if _loop:
+                _loop.call_soon_threadsafe(shop._notify, sess)
+    return o
 
 
 @app.get("/api/console/orders", tags=["console"])
@@ -310,6 +316,153 @@ def c_agent_runs(run_id: str):
     if run_id not in _runs:
         raise GateError("UNKNOWN_RUN", "No such run.", 404)
     return _runs[run_id]
+
+
+# ------------------------------------------------------------------ webshop: Aimo Assistant (customer-facing)
+from trade_gate.shop.assistant import Shop  # noqa: E402
+
+shop = Shop(gate)
+
+
+@app.get("/api/shop/customers", tags=["shop"])
+def s_customers():
+    out = []
+    for b in gate.buyers():
+        ctx = gate.customer_context(b["id"])
+        m = b.get("mandate") or {}
+        out.append({"id": b["id"], "name": b["name"], **ctx["customer"], "priorities": ctx["priorities"],
+                    "rules": ctx["rules"], "settings": ctx["settings"],
+                    "approval_limit_eur": (m.get("limits") or {}).get("auto_approve_max_order_eur"),
+                    "approvers": m.get("approvers", []),
+                    "standing_orders": ctx["standing_orders"], "recipes": ctx["saved_recipes"],
+                    "usual_products": ctx["usual_products"][:12],
+                    "suggestions": _SUGGESTIONS.get(b["id"], [])})
+    return out
+
+
+_SUGGESTIONS = {
+    "kultakeittio-catering": [
+        "Company party for 80 on Saturday: creamy salmon pasta, green salad and a dessert. 6 guests are gluten-free.",
+        "Pasta pesto for 400 people next Friday",
+        "We got a call: wedding dinner for 120 next Saturday — suggest a Finnish menu and order for it"],
+    "hotel-aurora": [
+        "Conference lunch for 150 on Wednesday: toast Skagen starter and a fish main. We report CO₂.",
+        "Extra breakfast for 300 guests on Friday — what do I need on top of the usual?"],
+    "espoo-childrens-hospital": [
+        "Dairy-free oat porridge for 100 children every morning next week",
+        "Afternoon snack for 120 children on Monday — biscuits or fruit, remember our allergy rules"],
+}
+
+
+class SessionIn(BaseModel):
+    customer_id: str
+
+
+class MessageIn(BaseModel):
+    text: str
+
+
+class SelectIn(BaseModel):
+    line_key: str
+    option: int
+
+
+class LineIn(BaseModel):
+    line_key: str
+
+
+class StandingIn(BaseModel):
+    standing_order_id: str
+
+
+class SettingsIn(BaseModel):
+    priorities: list[str] | None = None
+    avoid_allergens: list[str] | None = None
+    auto_confirm_standing_orders: bool | None = None
+    approval_limit_eur: float | None = None
+
+
+def _need_llm():
+    from trade_gate.config import ANTHROPIC_API_KEY
+    if not ANTHROPIC_API_KEY:
+        raise GateError("NO_LLM_KEY", "Set ANTHROPIC_API_KEY in .env to use the assistant.", 503)
+
+
+@app.post("/api/shop/sessions", tags=["shop"])
+def s_new(body: SessionIn):
+    return shop.create(body.customer_id).snapshot()
+
+
+@app.get("/api/shop/sessions/{sid}", tags=["shop"])
+def s_get(sid: str):
+    s = shop.get(sid)
+    shop.refresh_order(s)
+    return s.snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/messages", tags=["shop"])
+async def s_msg(sid: str, body: MessageIn):
+    _need_llm()
+    return shop.send(sid, body.text).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/standing-order", tags=["shop"])
+async def s_standing(sid: str, body: StandingIn):
+    _need_llm()
+    return shop.standing_order(sid, body.standing_order_id).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/cart/select", tags=["shop"])
+async def s_select(sid: str, body: SelectIn):
+    return shop.select(sid, body.line_key, body.option).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/cart/remove", tags=["shop"])
+async def s_remove(sid: str, body: LineIn):
+    return shop.remove(sid, body.line_key).snapshot()
+
+
+@app.post("/api/shop/sessions/{sid}/confirm", tags=["shop"])
+async def s_confirm(sid: str):
+    return (await shop.confirm(sid)).snapshot()
+
+
+@app.get("/api/shop/sessions/{sid}/stream", tags=["shop"])
+async def s_stream(sid: str, request: Request):
+    s = shop.get(sid)
+    q: asyncio.Queue = asyncio.Queue()
+    s.listeners.add(q)
+
+    async def gen():
+        try:
+            yield "retry: 2000\n\n"
+            yield f"data: {json.dumps(s.snapshot(), default=str)}\n\n"
+            while not await request.is_disconnected():
+                try:
+                    snap = await asyncio.wait_for(q.get(), timeout=15)
+                    while not q.empty():  # only the latest state matters
+                        snap = q.get_nowait()
+                    yield f"data: {json.dumps(snap, default=str)}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+        finally:
+            s.listeners.discard(q)
+
+    return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+@app.put("/api/shop/customers/{cid}/settings", tags=["shop"])
+def s_settings(cid: str, body: SettingsIn):
+    b = gate.buyer(cid)
+    who = (b["profile"].get("contact") or {}).get("name", "Customer")
+    gate.update_settings(cid, body.model_dump(exclude_none=True), by=who)
+    return next(c for c in s_customers() if c["id"] == cid)
+
+
+@app.get("/api/shop/insights", tags=["valio"])
+def s_insights():
+    """Valio Aimo's view: orders from the assistant, substitution and preference signals, audit integrity."""
+    return gate.insights()
 
 
 # ------------------------------------------------------------------ dashboard (static build, if present)
