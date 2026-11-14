@@ -11,9 +11,12 @@ import type { Customer, PlanItemOut, Session } from './types'
 import { ValioView } from './ValioView'
 import { Workspace } from './Workspace'
 import { getLang, setLang as setLangGlobal, t, type Lang } from './i18n'
+import { ShieldAlert } from 'lucide-react'
+import { BreakIt, NoKeyNotice } from './BreakIt'
+import { useDemoStatus } from './demo'
 
-type Tab = 'assistant' | 'approvals' | 'valio' | 'preferences'
-const TABS: Tab[] = ['assistant', 'approvals', 'valio', 'preferences']
+type Tab = 'assistant' | 'approvals' | 'valio' | 'preferences' | 'breakit'
+const TABS: Tab[] = ['assistant', 'approvals', 'valio', 'preferences', 'breakit']
 const sidKey = (cid: string) => `aimo.sid.${cid}`
 
 // one in-flight session lookup per customer (StrictMode mounts effects twice)
@@ -70,6 +73,7 @@ export default function ShopApp() {
     window.addEventListener('hashchange', h)
     return () => window.removeEventListener('hashchange', h)
   }, [])
+  const demo = useDemoStatus(() => setTab((x) => (x === 'assistant' ? 'breakit' : x)))
 
   // customers
   const reloadCustomers = useCallback(() => shop.customers(getLang()).then(setCustomers), [])
@@ -126,6 +130,15 @@ export default function ShopApp() {
       applySession(await fn(sid))
       return true
     } catch (e) {
+      if (e instanceof ApiError && e.code === 'UNKNOWN_SESSION') {
+        const s = await openSession(activeCid, true).catch(() => null)
+        if (s) {
+          sidRef.current = s.id
+          setSession(s)
+          toast('error', t('err_session_lost'), t('err_session_lost_body'))
+          return false
+        }
+      }
       fail(e, title)
       return false
     }
@@ -218,7 +231,8 @@ export default function ShopApp() {
       <main className="min-h-0 flex-1">
         {tab === 'assistant' && (
           <div className="grid h-full grid-cols-[38fr_62fr]">
-            <section className="min-h-0 border-r border-slate-200/80 bg-white">
+            <section className="flex min-h-0 flex-col border-r border-slate-200/80 bg-white">
+              {demo?.llm === false && <NoKeyNotice onOpen={() => setTab('breakit')} />}
               <Chat session={session} sending={sending} onSend={send} onNew={newConversation} />
             </section>
             <section className="min-h-0 min-w-0 bg-[#f4f6fa]">
@@ -234,6 +248,7 @@ export default function ShopApp() {
         {tab === 'preferences' && customer && (
           <div className="h-full overflow-y-auto"><Preferences key={customer.id} customer={customer} onSave={saveSettings} /></div>
         )}
+        {tab === 'breakit' && <div className="h-full overflow-y-auto"><BreakIt status={demo} /></div>}
       </main>
       <Toasts toasts={toasts} dismiss={(id) => setToasts((ts) => ts.filter((x) => x.id !== id))} />
     </div>
@@ -251,6 +266,7 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, o
     { id: 'approvals', label: t('tab_approvals'), icon: ClipboardCheck },
     { id: 'valio', label: t('tab_valio'), icon: BarChart3 },
     { id: 'preferences', label: t('tab_prefs'), icon: SlidersHorizontal },
+    { id: 'breakit', label: t('tab_break'), icon: ShieldAlert },
   ]
   return (
     <header className="relative z-20 flex h-14 shrink-0 items-center gap-4 whitespace-nowrap border-b border-slate-200 bg-white px-6">

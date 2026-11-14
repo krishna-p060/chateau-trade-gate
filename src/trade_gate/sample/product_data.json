@@ -1,0 +1,4475 @@
+[
+ {
+  "id": "464306",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004643065",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon rasvaton maitojuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Lactose-free skimmed milk drink 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004643065",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Rasvaton maito, laktaasientsyymi, D-vitamiini"
+    },
+    {
+     "language": "en",
+     "value": "Skimmed milk, lactase enzyme, vitamin D"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Everyday lactose-free milk drink for kitchens and breakfast buffets."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "463335",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004633356",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Luomu laktoositon kevytmaitojuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Organic lactose-free semi-skimmed milk drink 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "EU_ORGANIC_FARMING"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004633356",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Luomukevytmaito, laktaasientsyymi, D-vitamiini"
+    },
+    {
+     "language": "en",
+     "value": "Organic semi-skimmed milk, lactase enzyme, vitamin D"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Organic lactose-free milk drink from Finnish farms."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "462775",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004627751",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon täysmaitojuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Lactose-free whole milk drink 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004627751",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Täysmaito, laktaasientsyymi, D-vitamiini"
+    },
+    {
+     "language": "en",
+     "value": "Whole milk, lactase enzyme, vitamin D"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Full-bodied lactose-free milk drink."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "463038",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004630386",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon kevytmaitojuoma 2 x 10 l hanapakkaus"
+    },
+    {
+     "language": "en",
+     "value": "Lactose-free semi-skimmed milk drink 2 x 10 l bag-in-box"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kevytmaito, laktaasientsyymi, D-vitamiini"
+    },
+    {
+     "language": "en",
+     "value": "Semi-skimmed milk, lactase enzyme, vitamin D"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Bag-in-box for milk dispensers, shipped from the supplier's warehouse."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "465512",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004655129",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon UHT-maitojuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Lactose-free UHT milk drink 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004655129",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kevytmaito, laktaasientsyymi"
+    },
+    {
+     "language": "en",
+     "value": "Semi-skimmed milk, lactase enzyme"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Long-life lactose-free milk drink, stored at room temperature."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "469363",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004693633",
+  "category": "dairy-milk",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kevytmaito 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Semi-skimmed milk 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004693633",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kevytmaito, D-vitamiini"
+    },
+    {
+     "language": "en",
+     "value": "Semi-skimmed milk, vitamin D"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Fresh Finnish semi-skimmed milk."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "464249",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004642495",
+  "category": "dairy-cream",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [
+   {
+    "product": "464249",
+    "substituteProduct": "464260"
+   }
+  ],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon ruokakerma 15 % 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Cooking cream 15% lactose-free 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004642495",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kerma, stabilointiaine (karrageeni), laktaasientsyymi"
+    },
+    {
+     "language": "en",
+     "value": "Cream, stabiliser (carrageenan), lactase enzyme"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Heat-stable lactose-free cooking cream for sauces and soups."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "464251",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004642518",
+  "category": "dairy-cream",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Ruokakerma 15 % 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Cooking cream 15% 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004642518",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kerma, stabilointiaine (karrageeni)"
+    },
+    {
+     "language": "en",
+     "value": "Cream, stabiliser (carrageenan)"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Heat-stable cooking cream."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "464260",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004642600",
+  "category": "dairy-cream",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon vispikerma 35 % 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Whipping cream 35% lactose-free 1 l"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004642600",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kerma, laktaasientsyymi"
+    },
+    {
+     "language": "en",
+     "value": "Cream, lactase enzyme"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Lactose-free whipping cream for desserts and sauces."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "464194",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004641948",
+  "category": "dairy-yoghurt",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon maustamaton jogurtti 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Natural yoghurt lactose-free 1 kg"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004641948",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Pastöroitu maito, laktaasientsyymi, hapate"
+    },
+    {
+     "language": "en",
+     "value": "Pasteurised milk, lactase enzyme, yoghurt cultures"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Unsweetened yoghurt for breakfast buffets."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "463982",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004639822",
+  "category": "dairy-butter",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Voi normaalisuolainen 500 g"
+    },
+    {
+     "language": "en",
+     "value": "Butter salted 500 g"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kerma, suola"
+    },
+    {
+     "language": "en",
+     "value": "Cream, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Finnish salted butter."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "469440",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004694401",
+  "category": "dairy-cheese",
+  "vendorName": "Sample Dairy Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Parmesaaniraaste 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Grated parmesan 1 kg"
+    }
+   ],
+   "brand": "Sample Dairy",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004694401",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kova juusto (maito, suola, juoksute, kananmunan lysotsyymi)"
+    },
+    {
+     "language": "en",
+     "value": "Hard cheese (milk, salt, rennet, egg lysozyme)"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Aged Italian hard cheese, finely grated."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "470863",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004708634",
+  "category": "plant-drinks",
+  "vendorName": "Sample Plant-Based Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [
+   {
+    "product": "470863",
+    "substituteProduct": "470871"
+   },
+   {
+    "product": "470863",
+    "substituteProduct": "470880"
+   }
+  ],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kaurajuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Oat drink 1 l"
+    }
+   ],
+   "brand": "Sample Plant-Based",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "GO",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AY",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      },
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004708634",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vesi, suomalainen kaura 10 %, rypsiöljy, kalsium, suola, vitamiinit"
+    },
+    {
+     "language": "en",
+     "value": "Water, Finnish oats 10 %, rapeseed oil, calcium, salt, vitamins"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Dairy-free oat drink for porridge and baking."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "470871",
+  "salesUnit": "KAR",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   },
+   {
+    "unitId": "KAR",
+    "sizeInBaseUnits": 6
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004708719",
+  "category": "plant-drinks",
+  "vendorName": "Sample Plant-Based Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kaurajuoma barista 6 x 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Oat drink barista 6 x 1 l"
+    }
+   ],
+   "brand": "Sample Plant-Based",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "GO",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AY",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      },
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004708719",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vesi, suomalainen kaura 11 %, rypsiöljy, happamuudensäätöaine, kalsium, suola"
+    },
+    {
+     "language": "en",
+     "value": "Water, Finnish oats 11 %, rapeseed oil, acidity regulator, calcium, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Foamable dairy-free oat drink, sold by the case of six."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "470880",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004708801",
+  "category": "plant-drinks",
+  "vendorName": "Sample Plant-Based Oy",
+  "countryOfOrigin": "BE",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Soijajuoma maustamaton 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Soy drink unsweetened 1 l"
+    }
+   ],
+   "brand": "Sample Plant-Based",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AY",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      },
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004708801",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vesi, soijapavut 8 %, kalsium, vitamiinit"
+    },
+    {
+     "language": "en",
+     "value": "Water, soybeans 8 %, calcium, vitamins"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Unsweetened dairy-free soy drink."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "470895",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004708955",
+  "category": "plant-drinks",
+  "vendorName": "Sample Plant-Based Oy",
+  "countryOfOrigin": "ES",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Mantelijuoma 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Almond drink 1 l"
+    }
+   ],
+   "brand": "Sample Plant-Based",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "SA",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      },
+      {
+       "id": "FREE_FROM_LACTOSE"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004708955",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vesi, manteli 2,5 %, kalsium, suola"
+    },
+    {
+     "language": "en",
+     "value": "Water, almonds 2.5 %, calcium, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Dairy-free almond drink."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "475479",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004754792",
+  "category": "dry-pasta",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 1,
+  "substitutions": [
+   {
+    "product": "475479",
+    "substituteProduct": "475502"
+   }
+  ],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Spagetti 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Spaghetti 1 kg"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004754792",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Durumvehnäsuurimo, vesi"
+    },
+    {
+     "language": "en",
+     "value": "Durum wheat semolina, water"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Classic durum spaghetti, cooking time 9 minutes."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "475490",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004754907",
+  "category": "dry-pasta",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Gluteeniton spagetti 500 g"
+    },
+    {
+     "language": "en",
+     "value": "Gluten-free spaghetti 500 g"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AE",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_GLUTEN"
+      },
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Maissijauho, riisijauho, vesi"
+    },
+    {
+     "language": "en",
+     "value": "Maize flour, rice flour, water"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Gluten-free spaghetti made from maize and rice."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "475502",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004755027",
+  "category": "dry-pasta",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Pennepasta 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Penne rigate pasta 1 kg"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004755027",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Durumvehnäsuurimo, vesi"
+    },
+    {
+     "language": "en",
+     "value": "Durum wheat semolina, water"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Ridged penne that holds sauce well."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "476110",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004761103",
+  "category": "dry-cereals",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kaurahiutale 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Oat flakes 1 kg"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "GO",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AS",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004761103",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Suomalainen täysjyväkaura"
+    },
+    {
+     "language": "en",
+     "value": "Finnish wholegrain oats"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Rolled oats for porridge."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "476340",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004763404",
+  "category": "dry-sauces",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Basilikapesto 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Basil pesto 1 kg"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "SC",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Basilika 35 %, auringonkukkaöljy, kova juusto, cashewpähkinä, valkosipuli, suola"
+    },
+    {
+     "language": "en",
+     "value": "Basil 35 %, sunflower oil, hard cheese, cashew nuts, garlic, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Green pesto for pasta, shipped from the supplier's warehouse."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "463010",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004630102",
+  "category": "dry-oils",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Rypsiöljy 10 l"
+    },
+    {
+     "language": "en",
+     "value": "Rapeseed oil 10 l"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Suomalainen rypsiöljy"
+    },
+    {
+     "language": "en",
+     "value": "Finnish rapeseed oil"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Neutral frying and cooking oil."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460825",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004608255",
+  "category": "dry-coffee",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "BR",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Tummapaahtoinen suodatinkahvi 500 g"
+    },
+    {
+     "language": "en",
+     "value": "Dark roast filter coffee 500 g"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "RAINFOREST_ALLIANCE"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Paahdettu arabica-kahvi"
+    },
+    {
+     "language": "en",
+     "value": "Roasted arabica coffee"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Dark roast ground coffee for filter brewing."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "477032",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004770327",
+  "category": "drinks-juice",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "ES",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Appelsiinitäysmehu 1 l"
+    },
+    {
+     "language": "en",
+     "value": "Orange juice 1 l"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004770327",
+     "volume": {
+      "value": 1.0,
+      "unit": "LTR"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Appelsiinitäysmehu tiivisteestä"
+    },
+    {
+     "language": "en",
+     "value": "Orange juice from concentrate"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "100 % orange juice for breakfast."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "476725",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004767259",
+  "category": "dry-sauces",
+  "vendorName": "Sample Dry Goods Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Majoneesi 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Mayonnaise 1 kg"
+    }
+   ],
+   "brand": "Sample Dry Goods",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "BM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004767259",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Rypsiöljy, vesi, keltuainen, etikka, sinappi, suola"
+    },
+    {
+     "language": "en",
+     "value": "Rapeseed oil, water, egg yolk, vinegar, mustard, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Thick mayonnaise for cold kitchen."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "467310",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 0.01,
+  "salesUnitGtin": "02000004673109",
+  "category": "fish-fresh",
+  "vendorName": "Sample Fish Oy",
+  "countryOfOrigin": "NO",
+  "temperatureCondition": 2,
+  "substitutions": [
+   {
+    "product": "467310",
+    "substituteProduct": "467325"
+   }
+  ],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Tuore lohifilee 1,5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Fresh salmon fillet 1.5 kg"
+    }
+   ],
+   "brand": "Sample Fish",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AF",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "AQUACULTURE_STEWARDSHIP_COUNCIL"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Merilohi (Salmo salar), kasvatettu"
+    },
+    {
+     "language": "en",
+     "value": "Atlantic salmon (Salmo salar), farmed"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Trimmed fresh salmon side, skin on."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": true
+  }
+ },
+ {
+  "id": "467325",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004673253",
+  "category": "fish-frozen",
+  "vendorName": "Sample Fish Oy",
+  "countryOfOrigin": "NO",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Pakastelohifilee annospalat 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Frozen salmon fillet portions 5 kg"
+    }
+   ],
+   "brand": "Sample Fish",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AF",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "AQUACULTURE_STEWARDSHIP_COUNCIL"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Merilohi (Salmo salar), kasvatettu"
+    },
+    {
+     "language": "en",
+     "value": "Atlantic salmon (Salmo salar), farmed"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Skinless salmon portions of about 140 g, individually frozen."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "467402",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004674021",
+  "category": "fish-frozen",
+  "vendorName": "Sample Fish Oy",
+  "countryOfOrigin": "GL",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kuoritut katkaravut pakaste 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Peeled shrimps frozen 1 kg"
+    }
+   ],
+   "brand": "Sample Fish",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AC",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "MARINE_STEWARDSHIP_COUNCIL_LABEL"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Pohjankatkarapu, vesi, suola"
+    },
+    {
+     "language": "en",
+     "value": "Northern shrimp, water, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Cooked and peeled cold-water shrimps."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460198",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004601980",
+  "category": "veg-salad",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "ES",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Jäävuorisalaatti 400 g"
+    },
+    {
+     "language": "en",
+     "value": "Iceberg lettuce 400 g"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Jäävuorisalaatti"
+    },
+    {
+     "language": "en",
+     "value": "Iceberg lettuce"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Crisp iceberg lettuce heads."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460240",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004602406",
+  "category": "veg-salad",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kurkku kotimainen 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Cucumber Finnish 5 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kurkku"
+    },
+    {
+     "language": "en",
+     "value": "Cucumber"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Greenhouse cucumbers from Finland."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460255",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004602550",
+  "category": "veg-salad",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Tomaatti 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Tomatoes 5 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Tomaatti"
+    },
+    {
+     "language": "en",
+     "value": "Tomato"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Round greenhouse tomatoes."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460262",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004602628",
+  "category": "veg-salad",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "ES",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kirsikkatomaatti 250 g"
+    },
+    {
+     "language": "en",
+     "value": "Cherry tomatoes 250 g"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kirsikkatomaatti"
+    },
+    {
+     "language": "en",
+     "value": "Cherry tomato"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Sweet cherry tomatoes."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460310",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004603106",
+  "category": "veg-herbs",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [
+   {
+    "product": "460310",
+    "substituteProduct": "460322"
+   }
+  ],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Tilli 100 g"
+    },
+    {
+     "language": "en",
+     "value": "Fresh dill 100 g"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Tilli"
+    },
+    {
+     "language": "en",
+     "value": "Dill"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Fresh cut dill."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460322",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004603229",
+  "category": "veg-herbs",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Tilli pakaste silputtu 250 g"
+    },
+    {
+     "language": "en",
+     "value": "Dill frozen chopped 250 g"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Tilli"
+    },
+    {
+     "language": "en",
+     "value": "Dill"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Chopped dill, frozen right after harvest."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "466203",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004662035",
+  "category": "veg-roots",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Keltasipuli 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Yellow onions 5 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Sipuli"
+    },
+    {
+     "language": "en",
+     "value": "Onion"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Finnish yellow onions."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "470952",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004709525",
+  "category": "veg-roots",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kuorittu porkkana 1 kg"
+    },
+    {
+     "language": "en",
+     "value": "Carrots peeled 1 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [
+    {
+     "synkkaPackagingType": "BASE_UNIT_OR_EACH",
+     "gtin": "02000004709525",
+     "netWeight": {
+      "value": 1.0,
+      "unit": "KGM"
+     }
+    }
+   ],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Porkkana"
+    },
+    {
+     "language": "en",
+     "value": "Carrot"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Peeled whole carrots, ready to cook."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "471416",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004714161",
+  "category": "veg-roots",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kuorittu peruna 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Potatoes peeled 5 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Peruna"
+    },
+    {
+     "language": "en",
+     "value": "Potato"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Peeled firm potatoes, vacuum packed."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "460470",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004604707",
+  "category": "veg-berries",
+  "vendorName": "Sample Fresh Produce Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kotimainen mansikka 5 kg"
+    },
+    {
+     "language": "en",
+     "value": "Finnish strawberries 5 kg"
+    }
+   ],
+   "brand": "Sample Fresh Produce",
+   "classifications": [
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "X99",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Mansikka"
+    },
+    {
+     "language": "en",
+     "value": "Strawberry"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Fresh strawberries in season."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "472291",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004722913",
+  "category": "bakery-bread",
+  "vendorName": "Sample Bakery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Ruisleipä viipaloitu 500 g"
+    }
+   ],
+   "brand": "Sample Bakery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "NR",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AE",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Täysjyväruisjauho, vesi, suola, hiiva"
+    }
+   ],
+   "marketingTexts": [],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "461063",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004610630",
+  "category": "eggs",
+  "vendorName": "Sample Bakery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 2,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Vapaan kanan munat M 30 kpl"
+    },
+    {
+     "language": "en",
+     "value": "Free-range eggs M 30 pcs"
+    }
+   ],
+   "brand": "Sample Bakery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "coolTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kananmuna"
+    },
+    {
+     "language": "en",
+     "value": "Eggs"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Free-range eggs, tray of 30."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "472310",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004723101",
+  "category": "bakery-frozen",
+  "vendorName": "Sample Bakery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Karjalanpiirakka pakaste 20 x 70 g"
+    }
+   ],
+   "brand": "Sample Bakery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "NR",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Riisipuuro (vesi, maito, riisi), ruisjauho, vehnäjauho, suola"
+    }
+   ],
+   "marketingTexts": [],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "472325",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004723255",
+  "category": "bakery-frozen",
+  "vendorName": "Sample Bakery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Korvapuusti pakaste 12 x 90 g"
+    }
+   ],
+   "brand": "Sample Bakery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vehnäjauho, maito, sokeri, voi, kananmuna, kaneli, kardemumma, hiiva"
+    }
+   ],
+   "marketingTexts": [],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "478210",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004782108",
+  "category": "desserts-frozen",
+  "vendorName": "Sample Desserts Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Gluteeniton mustikkapiirakka pakaste 1,2 kg"
+    },
+    {
+     "language": "en",
+     "value": "Gluten-free blueberry pie frozen 1.2 kg"
+    }
+   ],
+   "brand": "Sample Desserts",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_GLUTEN"
+      },
+      {
+       "id": "VEGETARIAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Mustikka 30 %, sokeri, riisijauho, voi, kananmuna, perunatärkkelys"
+    },
+    {
+     "language": "en",
+     "value": "Blueberries 30 %, sugar, rice flour, butter, eggs, potato starch"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Pre-cut gluten-free blueberry pie, 12 slices."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "478225",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004782252",
+  "category": "desserts-frozen",
+  "vendorName": "Sample Desserts Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Suklaakakku pakaste 1,6 kg"
+    },
+    {
+     "language": "en",
+     "value": "Chocolate cake frozen 1.6 kg"
+    }
+   ],
+   "brand": "Sample Desserts",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AE",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AY",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "SH",
+       "unit": "MAY_CONTAIN"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGETARIAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Sokeri, vehnäjauho, kananmuna, kaakao 12 %, voi, soijalesitiini"
+    },
+    {
+     "language": "en",
+     "value": "Sugar, wheat flour, eggs, cocoa 12 %, butter, soy lecithin"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Pre-cut chocolate cake, 16 slices."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "478240",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004782405",
+  "category": "desserts-frozen",
+  "vendorName": "Sample Desserts Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 3,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Laktoositon vaniljajäätelö 5 l"
+    },
+    {
+     "language": "en",
+     "value": "Vanilla ice cream lactose-free 5 l"
+    }
+   ],
+   "brand": "Sample Desserts",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "ML",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AW",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "FREE_FROM_LACTOSE"
+      },
+      {
+       "id": "FREE_FROM_GLUTEN"
+      },
+      {
+       "id": "VEGETARIAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "freezeTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kerma, sokeri, glukoosisiirappi, vanilja, laktaasientsyymi"
+    },
+    {
+     "language": "en",
+     "value": "Cream, sugar, glucose syrup, vanilla, lactase enzyme"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Lactose-free vanilla ice cream in a catering tub."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481120",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004811204",
+  "category": "snacks-sweet",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "IT",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kinder Bueno hasselpähkinävohvelipatukka 43 g"
+    },
+    {
+     "language": "en",
+     "value": "Kinder Bueno hazelnut wafer bar 43 g"
+    }
+   ],
+   "brand": "Kinder",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "SH",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AY",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Maitosuklaa, sokeri, palmuöljy, vehnäjauho, hasselpähkinä 10,8 %, rasvaton maitojauhe, soijalesitiini"
+    },
+    {
+     "language": "en",
+     "value": "Milk chocolate, sugar, palm oil, wheat flour, hazelnuts 10.8 %, skimmed milk powder, soy lecithin"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Wafer bar with a hazelnut filling."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481205",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004812058",
+  "category": "snacks-savoury",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "PL",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Vehnäkeksi suolainen 200 g"
+    },
+    {
+     "language": "en",
+     "value": "Wheat crackers 200 g"
+    }
+   ],
+   "brand": "Sample Confectionery",
+   "classifications": [
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Salted crackers for cheese and soup."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481212",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004812126",
+  "category": "snacks-savoury",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kaurakeksi suolainen 180 g"
+    },
+    {
+     "language": "en",
+     "value": "Oat crackers 180 g"
+    }
+   ],
+   "brand": "Sample Confectionery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "GO",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AS",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AM",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AE",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Täysjyväkaurajauho 62 %, vehnäjauho, rypsiöljy, suola"
+    },
+    {
+     "language": "en",
+     "value": "Wholegrain oat flour 62 %, wheat flour, rapeseed oil, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Crisp oat crackers baked in a nut-free bakery."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481220",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004812201",
+  "category": "snacks-savoury",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "DE",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Seesamikeksi suolainen 150 g"
+    },
+    {
+     "language": "en",
+     "value": "Sesame crackers 150 g"
+    }
+   ],
+   "brand": "Sample Confectionery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AS",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vehnäjauho, seesaminsiemen 14 %, auringonkukkaöljy, suola"
+    },
+    {
+     "language": "en",
+     "value": "Wheat flour, sesame seeds 14 %, sunflower oil, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Thin crackers topped with sesame."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481310",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 6,
+  "salesUnitGtin": "02000004813109",
+  "category": "snacks-sweet",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "FI",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Kaurakeksi 150 g"
+    },
+    {
+     "language": "en",
+     "value": "Oat biscuits 150 g"
+    }
+   ],
+   "brand": "Sample Confectionery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "GO",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      }
+     ]
+    },
+    {
+     "name": "nonAllergen",
+     "values": [
+      {
+       "id": "AN",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AP",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AS",
+       "unit": "FREE_FROM"
+      },
+      {
+       "id": "AE",
+       "unit": "FREE_FROM"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGETARIAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "GOODS_FROM_FINLAND_BLUE_SWAN"
+      },
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Kaurahiutale 45 %, vehnäjauho, voi, sokeri, suola"
+    },
+    {
+     "language": "en",
+     "value": "Oat flakes 45 %, wheat flour, butter, sugar, salt"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Mildly sweet oat biscuits baked in a nut-free bakery, sold in multiples of six packs."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ },
+ {
+  "id": "481325",
+  "salesUnit": "ST",
+  "baseUnit": "ST",
+  "units": [
+   {
+    "unitId": "ST",
+    "sizeInBaseUnits": 1
+   }
+  ],
+  "allowedLotSize": 1,
+  "salesUnitGtin": "02000004813253",
+  "category": "snacks-sweet",
+  "vendorName": "Sample Confectionery Oy",
+  "countryOfOrigin": "NL",
+  "temperatureCondition": 1,
+  "substitutions": [],
+  "synkkaData": {
+   "names": [
+    {
+     "language": "fi",
+     "value": "Suklaahippukeksi 200 g"
+    },
+    {
+     "language": "en",
+     "value": "Chocolate chip cookies 200 g"
+    }
+   ],
+   "brand": "Sample Confectionery",
+   "classifications": [
+    {
+     "name": "allergen",
+     "values": [
+      {
+       "id": "AW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "UW",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AM",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "AY",
+       "unit": "CONTAINS"
+      },
+      {
+       "id": "SH",
+       "unit": "MAY_CONTAIN"
+      },
+      {
+       "id": "AP",
+       "unit": "MAY_CONTAIN"
+      }
+     ]
+    },
+    {
+     "name": "nutritionalClaim",
+     "values": [
+      {
+       "id": "VEGETARIAN"
+      }
+     ]
+    },
+    {
+     "name": "packagingMarkedLabel",
+     "values": [
+      {
+       "id": "warmTemperature"
+      }
+     ]
+    }
+   ],
+   "unitConversions": [],
+   "keyIngredients": [
+    {
+     "language": "fi",
+     "value": "Vehnäjauho, suklaahiput 25 %, sokeri, palmuöljy, soijalesitiini"
+    },
+    {
+     "language": "en",
+     "value": "Wheat flour, chocolate chips 25 %, sugar, palm oil, soy lecithin"
+    }
+   ],
+   "marketingTexts": [
+    {
+     "language": "en",
+     "value": "Crunchy cookies with chocolate chips."
+    }
+   ],
+   "vatCode": "13.5",
+   "variableUnit": false
+  }
+ }
+]

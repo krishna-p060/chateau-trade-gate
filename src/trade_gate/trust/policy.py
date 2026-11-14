@@ -44,12 +44,14 @@ class Decision:
 
 def evaluate(quote: dict, mandate: Mandate, catalog: Catalog, *, week_spend_eur: float = 0.0,
              reference_prices: dict[str, float] | None = None, related_recent_eur: float = 0.0,
-             confirmed_by: str | None = None) -> Decision:
+             confirmed_by: str | None = None, largest_units: dict[str, float] | None = None) -> Decision:
     """Evaluate a signed-and-verified quote against the buyer's mandate.
 
     confirmed_by: a person at the buyer reviewed this exact cart (with its warnings) and confirmed it.
     That covers delivery, substitution and price warnings; spend limits, allergen rules and hard limits
-    still apply (e.g. a chef's cart above the limit still goes to the F&B manager)."""
+    still apply (e.g. a chef's cart above the limit still goes to the F&B manager).
+    largest_units: per product, the largest quantity in the buyer's purchase history; an order no person
+    has seen that is many times larger goes to a human."""
     findings: list[Finding] = []
 
     def add(rule: str, outcome: str, msg: str, pid: str | None = None) -> None:
@@ -114,6 +116,12 @@ def evaluate(quote: dict, mandate: Mandate, catalog: Catalog, *, week_spend_eur:
             elif line.get("outside_preferences") and mandate.substitution.approval_outside_preferences:
                 add("substitution.outside_preferences", APPROVAL,
                     f"{name} replaces {line.get('replaces')} and falls outside stated preferences.", pid)
+        top = (largest_units or {}).get(pid)
+        factor = lim.unusual_quantity_factor
+        if top and factor and not confirmed_by and line["units"] > factor * top:
+            add("quantity.unusual", APPROVAL, f"{name}: {line['units']:g} {line.get('sales_unit', 'units')} is "
+                f"{line['units'] / top:.0f}× the largest order of this product in {mandate.buyer_name}'s "
+                f"purchase history ({top:g}).", pid)
         if pid in ref and line.get("unit_price"):
             inc = 100 * (line["unit_price"] - ref[pid]) / ref[pid]
             if inc > lim.max_unit_price_increase_pct:

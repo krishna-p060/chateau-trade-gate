@@ -114,10 +114,11 @@ CREATE INDEX idx_products_category ON products(category);
 """
 
 
-def build(db_path: Path = DB_PATH) -> int:
-    products = json.loads((RAW / "product_data.json").read_text(encoding="utf-8"))
-    reliability = _load_csv(RAW / "delivery_reliability.csv")
-    co2 = _load_csv(RAW / "carbon_footprint.csv")
+def build(db_path: Path = DB_PATH, raw_dir: Path = RAW) -> int:
+    """Index raw_dir (product_data.json, delivery_reliability.csv, carbon_footprint.csv) into db_path."""
+    products = json.loads((raw_dir / "product_data.json").read_text(encoding="utf-8"))
+    reliability = _load_csv(raw_dir / "delivery_reliability.csv")
+    co2 = _load_csv(raw_dir / "carbon_footprint.csv")
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
     con = sqlite3.connect(db_path)

@@ -1,0 +1,515 @@
+{
+ "vat_rate": 13.5,
+ "products": {
+  "464306": {
+   "price": 1.01,
+   "comparison_price": 1.01,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 5000,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "463335": {
+   "price": 1.4,
+   "comparison_price": 1.4,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 5000,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "462775": {
+   "price": 1.2,
+   "comparison_price": 1.2,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 51,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "463038": {
+   "price": 31.31,
+   "comparison_price": 1.57,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Terminal",
+   "stock": 999999,
+   "lead_days": 10,
+   "deliverable": true
+  },
+  "465512": {
+   "price": 1.25,
+   "comparison_price": 1.25,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 999999,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "469363": {
+   "price": 0.89,
+   "comparison_price": 0.89,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 4000,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "464249": {
+   "price": 3.45,
+   "comparison_price": 3.45,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 800,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "464251": {
+   "price": 2.95,
+   "comparison_price": 2.95,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 600,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "464260": {
+   "price": 5.6,
+   "comparison_price": 5.6,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 300,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "464194": {
+   "price": 2.75,
+   "comparison_price": 2.75,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 900,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "463982": {
+   "price": 4.95,
+   "comparison_price": 9.9,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 700,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "469440": {
+   "price": 17.9,
+   "comparison_price": 17.9,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 120,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "470863": {
+   "price": 1.59,
+   "comparison_price": 1.59,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 0,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "470871": {
+   "price": 11.34,
+   "comparison_price": 1.89,
+   "comparison_unit": "L",
+   "sales_unit": "KAR",
+   "logistic_model": "Stock",
+   "stock": 600,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "470880": {
+   "price": 1.45,
+   "comparison_price": 1.45,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 400,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "470895": {
+   "price": 1.99,
+   "comparison_price": 1.99,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 300,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "475479": {
+   "price": 1.65,
+   "comparison_price": 1.65,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 1500,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "475490": {
+   "price": 2.4,
+   "comparison_price": 4.8,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 240,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "475502": {
+   "price": 1.75,
+   "comparison_price": 1.75,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 900,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "476110": {
+   "price": 1.35,
+   "comparison_price": 1.35,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 700,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "476340": {
+   "price": 9.8,
+   "comparison_price": 9.8,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Terminal",
+   "stock": 999999,
+   "lead_days": 4,
+   "deliverable": true
+  },
+  "463010": {
+   "price": 21.5,
+   "comparison_price": 2.15,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 150,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460825": {
+   "price": 6.9,
+   "comparison_price": 13.8,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 800,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "477032": {
+   "price": 1.95,
+   "comparison_price": 1.95,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 1200,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "476725": {
+   "price": 4.3,
+   "comparison_price": 4.3,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 260,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "467310": {
+   "price": 26.85,
+   "comparison_price": 17.9,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 60,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "467325": {
+   "price": 74.5,
+   "comparison_price": 14.9,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 85,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "467402": {
+   "price": 13.9,
+   "comparison_price": 13.9,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 140,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460198": {
+   "price": 1.49,
+   "comparison_price": 3.72,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 300,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460240": {
+   "price": 11.5,
+   "comparison_price": 2.3,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 70,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460255": {
+   "price": 14.9,
+   "comparison_price": 2.98,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 90,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460262": {
+   "price": 1.79,
+   "comparison_price": 7.16,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 400,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460310": {
+   "price": 1.95,
+   "comparison_price": 19.5,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 45,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460322": {
+   "price": 2.6,
+   "comparison_price": 10.4,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 200,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "466203": {
+   "price": 4.9,
+   "comparison_price": 0.98,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 260,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "470952": {
+   "price": 1.2,
+   "comparison_price": 1.2,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 500,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "471416": {
+   "price": 5.4,
+   "comparison_price": 1.08,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 350,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "460470": {
+   "price": 39.0,
+   "comparison_price": 7.8,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 0,
+   "lead_days": 1,
+   "deliverable": false
+  },
+  "472291": {
+   "price": 2.15,
+   "comparison_price": 4.3,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 400,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "461063": {
+   "price": 6.4,
+   "comparison_price": null,
+   "comparison_unit": null,
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 300,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "472310": {
+   "price": 7.9,
+   "comparison_price": 5.64,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Terminal",
+   "stock": 999999,
+   "lead_days": 4,
+   "deliverable": true
+  },
+  "472325": {
+   "price": 8.4,
+   "comparison_price": 7.78,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 120,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "478210": {
+   "price": 14.5,
+   "comparison_price": 12.08,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 40,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "478225": {
+   "price": 18.9,
+   "comparison_price": 11.81,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 55,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "478240": {
+   "price": 15.9,
+   "comparison_price": 3.18,
+   "comparison_unit": "L",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 75,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481120": {
+   "price": 0.99,
+   "comparison_price": 23.02,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 600,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481205": {
+   "price": 1.35,
+   "comparison_price": 6.75,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 500,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481212": {
+   "price": 1.8,
+   "comparison_price": 10.0,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 350,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481220": {
+   "price": 1.95,
+   "comparison_price": 13.0,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 200,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481310": {
+   "price": 1.55,
+   "comparison_price": 10.33,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 450,
+   "lead_days": 1,
+   "deliverable": true
+  },
+  "481325": {
+   "price": 2.1,
+   "comparison_price": 10.5,
+   "comparison_unit": "KG",
+   "sales_unit": "ST",
+   "logistic_model": "Stock",
+   "stock": 300,
+   "lead_days": 1,
+   "deliverable": true
+  }
+ }
+}

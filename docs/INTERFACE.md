@@ -59,8 +59,10 @@ Discovery: `/.well-known/trade-gate.json` (capabilities, flow, assumptions) and
 **Authority (buyer → gate).** The buyer signs a `PurchasingMandate` credential (W3C VC 2.0 data
 model, secured as `vc+jwt`, EdDSA) naming the agent and its limits. The agent presents it as a
 bearer token. The gate verifies the signature against the buyer's registered key, checks expiry,
-and that the agent id matches. A mandate from another buyer, a modified mandate, or a mandate for
-another agent is refused.
+and compares the content with the mandate the buyer has on file now. A mandate from another buyer
+(`MANDATE_INVALID`), a modified mandate (`MANDATE_INVALID`) and a genuine mandate from before the
+buyer changed its rules (`MANDATE_SUPERSEDED`) are refused, and the refusal is logged. The agent id
+is read from the mandate itself; binding it to an agent-held key is not built.
 
 **Claims (gate → agent).** Every quote and order confirmation is a JWS signed by Valio's key and
 verifiable offline against the JWKS. The quote carries what the agent needs to trust without a
@@ -94,9 +96,23 @@ Evaluated by the gate on every order, independent of what the agent says.
 | Stock unknown (`availableAmount ≥ 999999`, typically supplier warehouse) | APPROVAL | Delivery not guaranteed |
 | Estimated delivery date after a passed cut-off | APPROVAL | Not confirmed by Valio |
 | Arrives after the requested date | APPROVAL | Buyer must accept the delay |
-| Substitute outside stated preferences | APPROVAL | Buyer's choice |
-| Price above reference by more than X % | APPROVAL | Price drift |
-| Category blocked for this agent | BLOCKED | Scope of the mandate |
+| Substitute outside stated preferences | APPROVAL | Buyer's choice. The agent declares the line a substitute; the webshop assistant always does |
+| Unit price more than X % above the last price this buyer paid (or a reference price in its profile) | APPROVAL | Price drift on repeat orders |
+| Quantity more than 5× the largest order of that product in the buyer's delivered history, in an order no person has seen | APPROVAL | A slipped digit or a hallucinated quantity; `unusual_quantity_factor` in the mandate, 0 turns it off |
+| Category blocked for this agent | BLOCKED | Scope of the mandate (no demo mandate sets one) |
+
+Before any rule runs, the gate refuses a quote line whose quantity is not a positive number, adds up
+repeated lines of one product, and at order time reads Valio's availability again past its cache: if
+stock or an order-by time no longer holds, the order is refused with `QUOTE_STALE` and what changed.
+
+**Approval.** Only a person named in the buyer's current mandate can decide; any other name is
+refused with `APPROVER_NOT_AUTHORISED` and logged. Approval repeats the stock and order-by check and
+the price hold: an order that no longer holds is closed (`ORDER_LAPSED`), never confirmed and never
+left pending. Names are checked, identities are not: the demo has no login (see §9).
+
+**Settings.** An allergen name the gate cannot map to a GS1 code is not saved (it would show as a rule
+and protect nothing; English and Finnish names are known), and the approval limit cannot exceed the
+mandate's hard maximum.
 
 Each finding carries a rule id (machine-readable) and a sentence (human-readable). The approver
 sees the reasons next to the agent's own rationale.
@@ -150,6 +166,17 @@ Append-only log; each entry has a plain-language summary, structured data, and
 `hash = SHA-256(entry + previous hash)`. Changing or deleting any entry breaks every later hash
 (`verify_chain`). The same log serves the buyer ("what did my agent do and why?") and Valio ("what
 did external agents do in our systems?").
+
+## 7b. Try to break it
+
+`trade_gate/attacks.py` holds ten attempts to get an order past the gate: a forbidden allergen, an
+agent approving its own order, a forged mandate, a superseded mandate, a negative line, a split
+purchase, ten times the usual quantity, a repeat order after a 20 % price rise, an approval after the
+stock is gone, and a rewritten audit entry. Each runs the gate's own code on a scratch gate (same
+catalog and Valio client, its own order book) and returns what was sent, the gate's code and reason,
+and the audit entries written. `uv run python -m trade_gate.walkthrough` prints them,
+`POST /api/demo/attacks/{id}` serves them, the webshop's "Try to break it" tab shows them, and
+`tests/test_gate.py` fails if one gets through.
 
 ## 8. Assumptions (visible to agents in the manifest)
 

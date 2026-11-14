@@ -7,6 +7,7 @@ validity window) -> place_order (quote + buyer mandate verified, guardrails eval
 from __future__ import annotations
 
 import json
+import math
 import secrets
 import sqlite3
 import threading
@@ -14,7 +15,7 @@ from datetime import date, datetime, timedelta
 
 import jwt
 
-from trade_gate.catalog.codes import LABELS, allergen_name
+from trade_gate.catalog.codes import ALLERGENS, LABELS, allergen_name, resolve_allergen
 from trade_gate.catalog.store import Catalog
 from trade_gate.config import STATE_DIR
 from trade_gate.engine.offers import TZ, _parse_dt, build_offer
@@ -40,6 +41,16 @@ def _now() -> datetime:
 
 def _id(prefix: str) -> str:
     return f"{prefix}_{secrets.token_hex(5)}"
+
+
+def _is_approver(person: str, approvers: list[str]) -> bool:
+    """True when person is one of the mandate's approvers, given as 'Name (Role)', the full name or the first name."""
+    who = person.strip().casefold()
+    for a in approvers:
+        name = a.split("(")[0].strip().casefold()
+        if who and who in (a.strip().casefold(), name, name.split(" ")[0]):
+            return True
+    return False
 
 
 def _content(p, o=None) -> tuple[float | None, str | None]:
@@ -129,6 +140,9 @@ class TradeGate:
         if "mandate" not in cols:
             self.con.execute("ALTER TABLE buyers ADD COLUMN mandate TEXT")
             self.con.commit()
+        if "unit_price" not in {r[1] for r in self.con.execute("PRAGMA table_info(purchases)")}:
+            self.con.execute("ALTER TABLE purchases ADD COLUMN unit_price REAL")
+            self.con.commit()
         self.key = KeyPair.load_or_create(state_dir / "gate_ed25519.pem", kid=f"{GATE_ID}-2026-11")
         self.audit = AuditLog(self.con, self.lock)
 
@@ -168,6 +182,12 @@ class TradeGate:
             raise GateError("MANDATE_INVALID", f"Purchasing mandate failed verification: {e}", 403) from e
         if m.buyer_id != buyer_id:
             raise GateError("MANDATE_MISMATCH", "Mandate was issued for a different buyer.", 403)
+        current = b["mandate"]
+        if current and m.to_credential_subject() != mandates.Mandate.from_credential_subject(
+                current).to_credential_subject():
+            raise GateError("MANDATE_SUPERSEDED", f"{b['name']} has changed its purchasing rules since this "
+                            "mandate was signed. Fetch the current mandate; the earlier one no longer "
+                            "authorises orders.", 403)
         return m
 
     def authenticate(self, mandate_jws: str | None) -> mandates.Mandate:
@@ -240,18 +260,24 @@ class TradeGate:
         self.buyer(buyer_id)
         if not lines:
             raise GateError("EMPTY_QUOTE", "A quote needs at least one line.")
+        try:
+            lines = self._merged_lines(lines)
+        except GateError as e:
+            self.audit.append(buyer_id=buyer_id, actor=GATE_ID, event="quote.refused",
+                              summary=f"Refused to quote for {agent_id}: {e.message}",
+                              data={"lines": lines, "code": e.code})
+            raise
         ids = [ln["product_id"] for ln in lines]
         prods = {p.id: p for p in self.catalog.get_many(ids)}
         missing = [i for i in ids if i not in prods]
         if missing:
             raise GateError("UNKNOWN_PRODUCT", f"Unknown product codes: {', '.join(missing)}", 404)
-        prices = self.valio.prices(ids, deliver_by)
-        avail = self.valio.availability(ids, deliver_by)
+        prices, avail = self._live(ids, deliver_by)
         now = _now()
         q_lines, problems = [], []
         for ln in lines:
             p = prods[ln["product_id"]]
-            units = float(ln["units"])
+            units = ln["units"]
             o = build_offer(p, prices.get(p.id), avail.get(p.id), need_qty=units, need_dim="unit",
                             deliver_by=deliver_by, now=now)
             if o.units_to_order != units:
@@ -308,6 +334,24 @@ class TradeGate:
                                                   "earliest_delivery")} for ln in q_lines]})
         return {"quote": body, "signature": jws}
 
+    @staticmethod
+    def _merged_lines(lines: list[dict]) -> list[dict]:
+        """One line per product with positive, finite units, so stock and spend are judged on the real total."""
+        merged: dict[str, dict] = {}
+        for ln in lines:
+            try:
+                units = float(ln["units"])
+            except (KeyError, TypeError, ValueError):
+                units = math.nan
+            if not math.isfinite(units) or units <= 0:
+                raise GateError("BAD_QUANTITY", f"Product {ln.get('product_id')}: units must be a positive "
+                                f"number, got {ln.get('units')!r}.")
+            if ln["product_id"] in merged:
+                merged[ln["product_id"]]["units"] += units
+            else:
+                merged[ln["product_id"]] = {**ln, "units": units}
+        return list(merged.values())
+
     def get_quote(self, quote_id: str) -> dict:
         r = self.con.execute("SELECT body, jws FROM quotes WHERE id=?", (quote_id,)).fetchone()
         if not r:
@@ -324,6 +368,57 @@ class TradeGate:
         return claims["quote"]
 
     # =================================================================== orders
+    def _live(self, ids: list[str], deliver_by: date, fresh: bool = False) -> tuple[dict, dict]:
+        """Valio's prices and availability for ids; fresh=True reads availability past the client's cache."""
+        try:
+            forget = getattr(self.valio, "forget", None)
+            if fresh and forget:
+                forget("/availability", ids, deliver_by)
+            return self.valio.prices(ids, deliver_by), self.valio.availability(ids, deliver_by)
+        except GateError:
+            raise
+        except Exception as e:
+            raise GateError("VALIO_UNAVAILABLE", "Valio's price and availability service did not answer "
+                            f"({type(e).__name__}); nothing was ordered. Try again in a moment.", 503) from e
+
+    def _changed_since_quote(self, quote: dict) -> list[str]:
+        """What no longer holds for a quote: stock checked afresh and order-by times against the clock."""
+        ids = [ln["product_id"] for ln in quote["lines"]]
+        deliver_by = date.fromisoformat(quote["deliver_by"])
+        prods = {p.id: p for p in self.catalog.get_many(ids)}
+        prices, avail = self._live(ids, deliver_by, fresh=True)
+        now, changed = _now(), []
+        for ln in quote["lines"]:
+            p = prods.get(ln["product_id"])
+            if not p:
+                continue
+            o = build_offer(p, prices.get(p.id), avail.get(p.id), need_qty=ln["units"], need_dim="unit",
+                            deliver_by=deliver_by, now=now)
+            hard = [i for i in o.issues if i.severity == "blocking" and i.code != "LATE"]
+            if hard:
+                changed += [f"{ln['name']}: {i.message}" for i in hard]
+            elif o.stock_status == "partial":
+                changed.append(f"{ln['name']}: only {o.available_amount:g} {p.sales_unit} in stock now, "
+                               f"{ln['units']:g} quoted.")
+            elif ln.get("earliest_delivery") and o.earliest_delivery and o.earliest_delivery > ln["earliest_delivery"]:
+                changed.append(f"{ln['name']}: the order-by time has passed since the quote; earliest delivery "
+                               f"is now {o.earliest_delivery}, not {ln['earliest_delivery']}.")
+        return changed
+
+    def _reference_prices(self, buyer_id: str, profile: dict) -> dict[str, float]:
+        """Per product: the reference price in the profile, else the unit price of the buyer's last confirmed order."""
+        ref = dict(profile.get("reference_prices") or {})
+        for r in self.con.execute("SELECT product_id, unit_price FROM purchases WHERE buyer_id=? AND unit_price "
+                                  "IS NOT NULL ORDER BY rowid DESC", (buyer_id,)):
+            ref.setdefault(r["product_id"], r["unit_price"])
+        return ref
+
+    def _largest_orders(self, buyer_id: str) -> dict[str, float]:
+        """Per product delivered on at least four past days: the largest quantity in one order line."""
+        return {r[0]: r[1] for r in self.con.execute(
+            "SELECT product_id, MAX(units) FROM purchases WHERE buyer_id=? AND day < ? GROUP BY product_id "
+            "HAVING COUNT(DISTINCT day) >= 4", (buyer_id, _now().date().isoformat()))}
+
     def _week_spend(self, buyer_id: str) -> float:
         start = (_now() - timedelta(days=_now().weekday())).date().isoformat()
         r = self.con.execute("SELECT COALESCE(SUM(total),0) FROM orders WHERE buyer_id=? AND status IN "
@@ -344,7 +439,13 @@ class TradeGate:
                     idempotency_key: str, rationale: str = "", confirmed_by: str | None = None) -> dict:
         """confirmed_by: the person who reviewed this exact cart (webshop flow). Their confirmation covers
         delivery/substitution warnings they were shown; spend and allergen rules still apply."""
-        existing = self.con.execute("SELECT id FROM orders WHERE idem_key=?", (idempotency_key,)).fetchone()
+        with self.lock:
+            return self._place_order(buyer_id, agent_id, quote_id, mandate_jws, f"{buyer_id}:{idempotency_key}",
+                                     rationale, confirmed_by)
+
+    def _place_order(self, buyer_id: str, agent_id: str, quote_id: str, mandate_jws: str, idem_key: str,
+                     rationale: str, confirmed_by: str | None) -> dict:
+        existing = self.con.execute("SELECT id FROM orders WHERE idem_key=?", (idem_key,)).fetchone()
         if existing:
             return self.get_order(existing["id"])
         stored = self.get_quote(quote_id)
@@ -353,21 +454,34 @@ class TradeGate:
             raise GateError("QUOTE_MISMATCH", "Quote belongs to another buyer.", 403)
         if self.con.execute("SELECT 1 FROM orders WHERE quote_id=? AND status!='REJECTED'", (quote_id,)).fetchone():
             raise GateError("QUOTE_USED", "This quote already has an order.", 409)
-        m = self.verify_mandate(buyer_id, mandate_jws)
-        if m.agent_id != agent_id:
-            raise GateError("AGENT_MISMATCH", f"Mandate authorises agent {m.agent_id}, not {agent_id}.", 403)
+        try:
+            m = self.verify_mandate(buyer_id, mandate_jws)
+            if m.agent_id != agent_id:
+                raise GateError("AGENT_MISMATCH", f"Mandate authorises agent {m.agent_id}, not {agent_id}.", 403)
+        except GateError as e:
+            self.audit.append(buyer_id=buyer_id, actor=agent_id, event="order.refused", ref=quote_id,
+                              summary=f"Refused an order from quote {quote_id} ({e.code}): {e.message}",
+                              data={"quote_id": quote_id, "code": e.code})
+            raise
+        changed = self._changed_since_quote(quote)
+        if changed:
+            self.audit.append(buyer_id=buyer_id, actor=GATE_ID, event="order.refused", ref=quote_id,
+                              summary=f"Refused an order from quote {quote_id}: no longer deliverable as quoted. "
+                                      + " ".join(changed), data={"quote_id": quote_id, "changed": changed})
+            raise GateError("QUOTE_STALE", "No longer deliverable as quoted: " + " ".join(changed)
+                            + " Request a new quote.", 409)
         decision = evaluate(quote, m, self.catalog, week_spend_eur=self._week_spend(buyer_id),
                             confirmed_by=confirmed_by,
-                            reference_prices=self.buyer(buyer_id)["profile"].get("reference_prices"),
+                            reference_prices=self._reference_prices(buyer_id, self.buyer(buyer_id)["profile"]),
+                            largest_units=self._largest_orders(buyer_id),
                             related_recent_eur=self._related_recent_spend(
                                 buyer_id, {ln["product_id"] for ln in quote["lines"]}))
         oid, now = _id("ord"), _now().isoformat(timespec="seconds")
         status = {AUTO: "CONFIRMED", APPROVAL: "PENDING_APPROVAL", BLOCKED: "REJECTED"}[decision.outcome]
-        with self.lock:
-            self.con.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                             (oid, buyer_id, quote_id, status, now, now, quote["total_price"], idempotency_key,
-                              agent_id, rationale, json.dumps(decision.to_dict()), None))
-            self.con.commit()
+        self.con.execute("INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                         (oid, buyer_id, quote_id, status, now, now, quote["total_price"], idem_key,
+                          agent_id, rationale, json.dumps(decision.to_dict()), None))
+        self.con.commit()
         self.audit.append(buyer_id=buyer_id, actor=agent_id, event="order.requested", ref=oid,
                           summary=(f"{confirmed_by} confirmed the cart in the webshop: order from quote {quote_id} "
                                    f"(€{quote['total_price']:,.2f})." if confirmed_by else
@@ -383,11 +497,10 @@ class TradeGate:
                           data=decision.to_dict())
         if status == "PENDING_APPROVAL":
             aid = _id("apr")
-            with self.lock:
-                self.con.execute("INSERT INTO approvals VALUES (?,?,?,?,?,?,?,?,?)",
-                                 (aid, oid, buyer_id, "PENDING", now, None, None, None,
-                                  json.dumps(decision.reasons)))
-                self.con.commit()
+            self.con.execute("INSERT INTO approvals VALUES (?,?,?,?,?,?,?,?,?)",
+                             (aid, oid, buyer_id, "PENDING", now, None, None, None,
+                              json.dumps(decision.reasons)))
+            self.con.commit()
             self.audit.append(buyer_id=buyer_id, actor=GATE_ID, event="approval.requested", ref=oid,
                               summary=f"Approval {aid} sent to {', '.join(m.approvers) or 'buyer approver'}.",
                               data={"approval_id": aid, "order_id": oid, "reasons": decision.reasons})
@@ -406,9 +519,10 @@ class TradeGate:
         with self.lock:
             self.con.execute("UPDATE orders SET status='CONFIRMED', updated=?, confirmation_jws=? WHERE id=?",
                              (now.isoformat(timespec="seconds"), conf, oid))
-            self.con.executemany("INSERT INTO purchases VALUES (?,?,?,?,?)",
-                                 [(quote["buyer_id"], quote["deliver_by"], ln["product_id"], ln["units"], oid)
-                                  for ln in quote["lines"]])
+            self.con.executemany(
+                "INSERT INTO purchases (buyer_id, day, product_id, units, source, unit_price) VALUES (?,?,?,?,?,?)",
+                [(quote["buyer_id"], quote["deliver_by"], ln["product_id"], ln["units"], oid, ln["unit_price"])
+                 for ln in quote["lines"]])
             self.con.commit()
         self.audit.append(buyer_id=quote["buyer_id"], actor=GATE_ID, event="order.confirmed", ref=oid,
                           summary=f"Order {oid} confirmed ({by}). €{quote['total_price']:,.2f} excl. VAT, "
@@ -448,29 +562,60 @@ class TradeGate:
         return out
 
     def decide(self, approval_id: str, approver: str, approve: bool, note: str = "") -> dict:
-        a = self.con.execute("SELECT * FROM approvals WHERE id=?", (approval_id,)).fetchone()
-        if not a:
-            raise GateError("UNKNOWN_APPROVAL", f"No approval {approval_id}.", 404)
-        if a["status"] != "PENDING":
-            raise GateError("ALREADY_DECIDED", f"Approval already {a['status'].lower()}.", 409)
-        order = self.get_order(a["order_id"])
-        now = _now().isoformat(timespec="seconds")
-        if approve:
-            self.verify_quote(self.get_quote(order["quote_id"])["signature"])  # price still held?
+        """A person named as approver in the buyer's mandate approves or rejects a held order. Approval
+        re-checks stock, order-by times and the price hold; an order that no longer holds is closed."""
         with self.lock:
+            a = self.con.execute("SELECT * FROM approvals WHERE id=?", (approval_id,)).fetchone()
+            if not a:
+                raise GateError("UNKNOWN_APPROVAL", f"No approval {approval_id}.", 404)
+            if a["status"] != "PENDING":
+                raise GateError("ALREADY_DECIDED", f"Approval already {a['status'].lower()}.", 409)
+            order = self.get_order(a["order_id"])
+            b = self.buyer(a["buyer_id"])
+            named = (b["mandate"] or {}).get("approvers") or []
+            if not _is_approver(approver, named):
+                self.audit.append(buyer_id=a["buyer_id"], actor=f"unverified:{approver}", event="approval.refused",
+                                  ref=order["id"],
+                                  summary=f"Refused a decision on order {order['id']} by “{approver}”: not an "
+                                          f"approver in {b['name']}'s mandate ({', '.join(named) or 'none named'}).",
+                                  data={"approval_id": approval_id, "attempted_by": approver, "approve": approve})
+                raise GateError("APPROVER_NOT_AUTHORISED", f"“{approver}” is not an approver in {b['name']}'s "
+                                f"mandate. Named approvers: {', '.join(named) or 'none'}.", 403)
+            now = _now().isoformat(timespec="seconds")
+            lapsed = self._lapsed(order) if approve else []
+            if lapsed:
+                why = "No longer deliverable as approved: " + " ".join(lapsed)
+                self.con.execute("UPDATE approvals SET status='REJECTED', decided=?, approver=?, note=? WHERE id=?",
+                                 (now, "Trade Gate", why, approval_id))
+                self.con.execute("UPDATE orders SET status='REJECTED', updated=? WHERE id=?", (now, order["id"]))
+                self.con.commit()
+                self.audit.append(buyer_id=a["buyer_id"], actor=GATE_ID, event="order.lapsed", ref=order["id"],
+                                  summary=f"{approver} approved order {order['id']}, but it was closed unconfirmed. "
+                                          f"{why}", data={"approval_id": approval_id, "changed": lapsed})
+                raise GateError("ORDER_LAPSED", why + " The order was closed; request a new quote.", 409)
             self.con.execute("UPDATE approvals SET status=?, decided=?, approver=?, note=? WHERE id=?",
                              ("APPROVED" if approve else "REJECTED", now, approver, note, approval_id))
             if not approve:
                 self.con.execute("UPDATE orders SET status='REJECTED', updated=? WHERE id=?", (now, order["id"]))
             self.con.commit()
-        self.audit.append(buyer_id=a["buyer_id"], actor=f"human:{approver}",
-                          event="approval.approved" if approve else "approval.rejected", ref=order["id"],
-                          summary=f"{approver} {'approved' if approve else 'rejected'} order {order['id']}"
-                                  + (f": “{note}”" if note else "."),
-                          data={"approval_id": approval_id, "note": note})
-        if approve:
-            self._confirm(order["id"], order["quote"], by=f"human:{approver}")
-        return self.get_order(order["id"])
+            self.audit.append(buyer_id=a["buyer_id"], actor=f"human:{approver}",
+                              event="approval.approved" if approve else "approval.rejected", ref=order["id"],
+                              summary=f"{approver} {'approved' if approve else 'rejected'} order {order['id']}"
+                                      + (f": “{note}”" if note else "."),
+                              data={"approval_id": approval_id, "note": note})
+            if approve:
+                self._confirm(order["id"], order["quote"], by=f"human:{approver}")
+            return self.get_order(order["id"])
+
+    def _lapsed(self, order: dict) -> list[str]:
+        try:
+            self.verify_quote(self.get_quote(order["quote_id"])["signature"])
+        except GateError as e:
+            if e.code != "QUOTE_EXPIRED":
+                raise
+            return [f"the price hold of quote {order['quote_id']} ended at "
+                    f"{order['quote']['expires_at'][11:16]}."]
+        return self._changed_since_quote(order["quote"])
 
     # =================================================================== customer data (webshop)
     def ensure_history(self, buyers: list[dict], weeks: int = 8) -> None:
@@ -497,7 +642,8 @@ class TradeGate:
                                 rows.append((b["id"], d.isoformat(), ing["product_id"], rnd.randint(2, 8),
                                              f"event:{r['id']}"))
             with self.lock:
-                self.con.executemany("INSERT INTO purchases VALUES (?,?,?,?,?)", rows)
+                self.con.executemany(
+                    "INSERT INTO purchases (buyer_id, day, product_id, units, source) VALUES (?,?,?,?,?)", rows)
                 self.con.commit()
 
     def usual_products(self, buyer_id: str, limit: int = 40) -> list[dict]:
@@ -628,6 +774,7 @@ class TradeGate:
 
         b = self.buyer(buyer_id)
         prof, m = b["profile"], mandates.Mandate.from_credential_subject(b["mandate"])
+        self._check_settings(changes, m)
         what = []
         if "priorities" in changes and [p for p in changes["priorities"] if p.strip()] != prof.get("priorities"):
             prof["priorities"] = [p for p in changes["priorities"] if p.strip()]
@@ -656,6 +803,18 @@ class TradeGate:
                                   f"mandate was re-signed by the customer.",
                           data={"changes": changes})
         return self.buyer(buyer_id)
+
+    @staticmethod
+    def _check_settings(changes: dict, m: mandates.Mandate) -> None:
+        unknown = [a for a in changes.get("avoid_allergens") or [] if not resolve_allergen(a)]
+        if unknown:
+            raise GateError("UNKNOWN_ALLERGEN", f"Not saved: “{', '.join(unknown)}” is not an allergen the gate "
+                            "can check products against, so it would protect nothing. Known names: "
+                            + ", ".join(sorted(set(ALLERGENS.values()) - {"no declarable allergens"})) + ".")
+        limit = changes.get("approval_limit_eur")
+        if limit is not None and not 0 <= float(limit) <= m.limits.hard_max_order_eur:
+            raise GateError("LIMIT_OUT_OF_RANGE", f"Not saved: the approval limit must be between €0 and the "
+                            f"hard limit of €{m.limits.hard_max_order_eur:,.0f} per order.")
 
     def add_order_template(self, buyer_id: str, name: str, lines: list[dict], weekdays: list[str], by: str) -> dict:
         """Save a cart as an order template (Valio's term for a reusable / standing order)."""

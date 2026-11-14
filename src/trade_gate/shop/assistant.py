@@ -13,6 +13,7 @@ customer's own agent would use later. Two UI tools stay local: ask_customer and 
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import secrets
@@ -275,11 +276,20 @@ class Shop:
                 while isinstance(root, BaseExceptionGroup) and root.exceptions:
                     root = root.exceptions[0]
                 log.exception("assistant run failed in session %s", s.id, exc_info=root)
+                self._drop_unanswered_tool_call(s)
                 self._msg(s, "error", t(s.lang, "went_wrong", err=f"{type(root).__name__}: {str(root)[:300]}"),
                           notify=False)
                 s.status = "cart" if s.cart else "idle"
             self._notify(s)
         s.task = asyncio.create_task(runner())
+
+    @staticmethod
+    def _drop_unanswered_tool_call(s: Session) -> None:
+        """After a failed run, remove a trailing assistant turn whose tool calls got no result, so the next message is valid."""
+        if s.pending or not s.llm or s.llm[-1]["role"] != "assistant" or isinstance(s.llm[-1]["content"], str):
+            return
+        if any(getattr(bl, "type", None) == "tool_use" for bl in s.llm[-1]["content"]):
+            s.llm.pop()
 
     # ------------------------------------------------------------------ customer actions
     @staticmethod
@@ -467,23 +477,29 @@ class Shop:
         self._notify(s)
         try:
             order = await asyncio.to_thread(self._place, s)
-        except GateError as e:
+        except Exception as e:
+            if not isinstance(e, GateError):
+                log.exception("order failed in session %s", s.id)
             s.status = "cart"
-            self._msg(s, "error", t(s.lang, "order_failed", msg=e.message))
+            self._msg(s, "error", t(s.lang, "order_failed",
+                                    msg=e.message if isinstance(e, GateError) else f"{type(e).__name__}: {str(e)[:300]}"))
             return s
         s.order = order
         s.status = "ordered"
-        if order["status"] == "CONFIRMED":
-            text = t(s.lang, "order_confirmed", id=order["order_id"], total=eur(order["total"], s.lang),
-                     day=day(order["delivery"], s.lang))
-        elif order["status"] == "PENDING_APPROVAL":
-            text = t(s.lang, "order_pending", who=order["approver"] or t(s.lang, "your_approver"),
-                     reasons=" ".join(order["reasons"][:2]))
-        else:
-            text = t(s.lang, "order_rejected", reasons=" ".join(order["reasons"][:2]))
-        self._msg(s, "notice", text, notify=False, order_id=order["order_id"], status=order["status"])
+        self._msg(s, "notice", self._order_text(s, order), notify=False, order_id=order["order_id"],
+                  status=order["status"])
         self._notify(s)
         return s
+
+    @staticmethod
+    def _order_text(s: Session, order: dict) -> str:
+        if order["status"] == "CONFIRMED":
+            return t(s.lang, "order_confirmed", id=order["order_id"], total=eur(order["total"], s.lang),
+                     day=day(order["delivery"], s.lang))
+        if order["status"] == "PENDING_APPROVAL":
+            return t(s.lang, "order_pending", who=order["approver"] or t(s.lang, "your_approver"),
+                     reasons=" ".join(order["reasons"][:2]))
+        return t(s.lang, "order_rejected", reasons=" ".join(order["reasons"][:2]))
 
     def _place(self, s: Session, auto: bool = False) -> dict:
         b = self.gate.buyer(s.customer_id)
@@ -500,7 +516,9 @@ class Shop:
                              if ln.get("replaces") else {})})
         q = self.gate.create_quote(s.customer_id, m.agent_id, lines, date.fromisoformat(cart["deliver_by"]),
                                    note=" · ".join(x for x in (cart.get("reference"), cart.get("title")) if x))
-        o = self.gate.place_order(s.customer_id, m.agent_id, q["quote"]["quote_id"], token, str(uuid.uuid4()),
+        cart_key = hashlib.sha256(json.dumps([s.id, cart["deliver_by"], cart.get("reference"), lines],
+                                             sort_keys=True).encode()).hexdigest()
+        o = self.gate.place_order(s.customer_id, m.agent_id, q["quote"]["quote_id"], token, cart_key,
                                   rationale=f"Cart prepared by Aimo Assistant: {cart.get('title', '')}",
                                   confirmed_by=None if auto else who)
         # signals for Valio Aimo: substitutions and preferences the customer expressed in the cart
@@ -589,8 +607,10 @@ class Shop:
                 self._notify(s)
                 s.order = await asyncio.to_thread(self._place, s, True)
                 s.status = "ordered"
-                self._msg(s, "notice", t(s.lang, "template_auto", name=so["name"], total=eur(s.order["total"], s.lang),
-                                          day=day(d.isoformat(), s.lang)),
+                self._msg(s, "notice",
+                          t(s.lang, "template_auto", name=so["name"], total=eur(s.order["total"], s.lang),
+                            day=day(d.isoformat(), s.lang)) if s.order["status"] == "CONFIRMED"
+                          else self._order_text(s, s.order),
                           notify=False, order_id=s.order["order_id"], status=s.order["status"])
             else:
                 s.status = "cart"
@@ -773,7 +793,11 @@ class Shop:
                                 results.append({"type": "tool_result", "tool_use_id": bl.id,
                                                 "content": "Ignored: one on-screen step at a time."})
                             continue
-                        content = await self._tool(s, mcp, bl.name, bl.input)
+                        try:
+                            content = await self._tool(s, mcp, bl.name, bl.input)
+                        except Exception as e:
+                            log.exception("tool %s failed in session %s", bl.name, s.id)
+                            content = json.dumps({"error": "TOOL_FAILED", "message": f"{type(e).__name__}: {e}"[:300]})
                         results.append({"type": "tool_result", "tool_use_id": bl.id, "content": content})
                         if (bl.name == "show_cart" and '"shown": true' in content and s.cart
                                 and all(ln["options"] for ln in s.cart["lines"])):

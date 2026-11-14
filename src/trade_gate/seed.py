@@ -177,9 +177,8 @@ def load_mandate(buyer_id: str, state_dir=STATE_DIR) -> str:
 
 
 if __name__ == "__main__":
-    from trade_gate.service import TradeGate
-    from trade_gate.valio_client import ValioClient
+    from trade_gate.demo import open_gate
 
-    tokens = seed(TradeGate(ValioClient()))
+    tokens = seed(open_gate())
     for k, v in tokens.items():
-        print(f"{k}: mandate issued ({len(v)} chars) -> data/state/mandates/{k}.jwt")
+        print(f"{k}: mandate issued ({len(v)} chars) -> {STATE_DIR / 'mandates' / f'{k}.jwt'}")

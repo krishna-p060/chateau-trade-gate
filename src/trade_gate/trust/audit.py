@@ -55,6 +55,7 @@ class AuditLog:
 
     def entries(self, buyer_id: str | None = None, ref: str | None = None, since_seq: int = 0,
                 limit: int = 500) -> list[dict]:
+        """Matching entries in sequence order; when more than limit match, the newest limit."""
         sql, args = "SELECT * FROM audit WHERE seq > ?", [since_seq]
         if buyer_id:
             sql += " AND buyer_id = ?"
@@ -62,7 +63,7 @@ class AuditLog:
         if ref:
             sql += " AND (ref = ? OR data LIKE ?)"
             args += [ref, f"%{ref}%"]
-        rows = self.con.execute(sql + " ORDER BY seq LIMIT ?", (*args, limit)).fetchall()
+        rows = self.con.execute(sql + " ORDER BY seq DESC LIMIT ?", (*args, limit)).fetchall()[::-1]
         cols = ["seq", "ts", "buyer_id", "actor", "event", "summary", "ref", "data", "prev_hash", "hash"]
         out = []
         for r in rows:

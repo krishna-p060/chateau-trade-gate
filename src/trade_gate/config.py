@@ -11,7 +11,7 @@ load_dotenv(ROOT / ".env")
 
 DATA_DIR = ROOT / "data"
 DB_PATH = DATA_DIR / "catalog.sqlite"
-STATE_DIR = DATA_DIR / "state"  # orders, quotes, approvals, audit log, keys
+SAMPLE_DIR = Path(__file__).resolve().parent / "sample"
 
 VALIO_API_BASE = os.getenv("VALIO_API_BASE", "https://junction26.valioaimo.fi/api")
 VALIO_API_KEY = os.getenv("VALIO_API_KEY", "")
@@ -21,3 +21,7 @@ ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 AGENT_MODEL = os.getenv("AGENT_MODEL", "claude-opus-5-5")
 
 TIMEZONE = "Europe/Helsinki"
+
+DEMO = os.getenv("TRADE_GATE_DEMO", "") == "1" or (not VALIO_API_KEY and not DB_PATH.exists())
+DEMO_DIR = DATA_DIR / "demo"
+STATE_DIR = (DEMO_DIR if DEMO else DATA_DIR) / "state"
