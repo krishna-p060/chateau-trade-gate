@@ -253,22 +253,22 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, o
     { id: 'preferences', label: t('tab_prefs'), icon: SlidersHorizontal },
   ]
   return (
-    <header className="relative z-20 flex h-14 shrink-0 items-center gap-6 border-b border-slate-200 bg-white px-6">
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-4 whitespace-nowrap border-b border-slate-200 bg-white px-6">
       <div className="flex items-center gap-3">
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-[#0b2f6b] text-[15px] font-bold tracking-tight text-white shadow-sm">VA</div>
         <div className="leading-tight">
           <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#0b2f6b]/70">{t('brand')}</div>
-          <div className="flex items-center gap-2 text-[16px] font-semibold text-slate-900">
+          <div className="flex items-center gap-2 whitespace-nowrap text-[16px] font-semibold text-slate-900">
             {t('app')}
             <span className="rounded-md bg-amber-100 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-amber-800">{t('prototype')}</span>
           </div>
         </div>
       </div>
 
-      <nav className="ml-4 flex items-center gap-1">
+      <nav className="ml-2 flex items-center gap-0.5">
         {items.map(({ id, label, icon: Icon }) => (
           <button key={id} type="button" onClick={() => setTab(id)}
-            className={cx('relative flex items-center gap-2 rounded-lg px-3.5 py-2 text-[13.5px] font-medium transition',
+            className={cx('relative flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-[13.5px] font-medium transition',
               tab === id ? 'bg-[#eef3fc] text-[#0b2f6b]' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800')}>
             <Icon className="h-4 w-4" />
             {label}
@@ -279,7 +279,7 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, o
         ))}
       </nav>
 
-      <div className="ml-auto flex items-center gap-4">
+      <div className="ml-auto flex min-w-0 items-center gap-3">
         <div role="group" aria-label={t('language')} className="flex rounded-lg bg-slate-100 p-0.5 text-[12px] font-semibold">
           {(['en', 'fi'] as Lang[]).map((l) => (
             <button key={l} type="button" onClick={() => onLang(l)} aria-pressed={lang === l}
@@ -289,8 +289,8 @@ function Header({ tab, setTab, pending, customers, customer, onCustomer, lang, o
           ))}
         </div>
         <CustomerSwitcher customers={customers} customer={customer} onChange={onCustomer} />
-        <a href="/console" className="flex items-center gap-1 text-[12px] text-slate-400 transition hover:text-[#0b2f6b]">
-          <Terminal className="h-3.5 w-3.5" /> {t('dev_console')}
+        <a href="/console" title={t('dev_console')} className="flex items-center gap-1 text-[12px] text-slate-400 transition hover:text-[#0b2f6b]">
+          <Terminal className="h-3.5 w-3.5" /> <span className="hidden 2xl:inline">{t('dev_console')}</span>
         </a>
       </div>
     </header>
@@ -314,13 +314,13 @@ function CustomerSwitcher({ customers, customer, onChange }: { customers: Custom
   return (
     <div ref={ref} className="relative">
       <button type="button" onClick={() => setOpen(!open)}
-        className="flex items-center gap-2.5 rounded-xl py-1.5 pl-1.5 pr-2.5 text-left ring-1 ring-slate-200 transition hover:bg-slate-50">
-        <div className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-[12px] font-bold text-white">
+        className="flex min-w-0 max-w-[230px] items-center gap-2.5 rounded-xl py-1.5 pl-1.5 pr-2.5 text-left ring-1 ring-slate-200 transition hover:bg-slate-50">
+        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 text-[12px] font-bold text-white">
           {customer ? initials(customer.contact?.name || customer.name) : '…'}
         </div>
-        <div className="leading-tight">
-          <div className="text-[13px] font-semibold text-slate-800">{customer?.name || t('loading')}</div>
-          <div className="text-[11.5px] text-slate-500">{customer?.contact ? `${customer.contact.name} · ${customer.contact.role}` : ''}</div>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[13px] font-semibold text-slate-800">{customer?.name || t('loading')}</div>
+          <div className="truncate text-[11.5px] text-slate-500">{customer?.contact ? `${customer.contact.name} · ${customer.contact.role}` : ''}</div>
         </div>
         <ChevronDown className={cx('h-4 w-4 text-slate-400 transition', open && 'rotate-180')} />
       </button>
