@@ -91,6 +91,10 @@ uv run uvicorn trade_gate.api:app --port 8400    # gate + MCP + webshop; seeds t
 | Recipes & margins in My Aimo; carbon footprint reports | Saved recipes drive quantities; **cost per portion**; CO₂ per line and per cart |
 | Webshop: order templates, user reference, availability notifications, cut-off times | Save cart as **order template**, **your reference**, **notify me when back**, **order-by** cut-off per line |
 
+Optional asks: delivery & sustainability comparison (reliability, stock certainty, CO₂, labels),
+substitution & exceptions (cut-offs, unknown stock, lot sizes, pack maths, late items), traceability
+(hash-chained plain-language audit log, signed quotes and confirmations).
+
 ## Architecture
 
 ```
