@@ -14,6 +14,8 @@ documented standards: **MCP** (Model Context Protocol) and **OpenAPI 3.1** for t
 | **Buyer agent** (any vendor, any model) | Finds, compares, orders on the buyer's behalf | The mandate (bearer credential) |
 | **Trade Gate** (Valio side) | Answers queries, quotes, enforces guardrails, records everything | Valio's signing key, the buyer registry |
 | **Human approver** (named in the mandate) | Signs off exceptions | Approval console |
+| **Customer in the webshop** (chef, kitchen manager) | Describes the need, makes choices, confirms the cart | Webshop login (SSO in production) |
+| **Aimo Assistant** (Valio-hosted agent) | Turns menus/events/order templates into carts | The customer's mandate, used through the same MCP tools |
 
 ## 2. Flow
 
@@ -38,6 +40,8 @@ approval window; an expired quote cannot become an order.
 | MCP tool | REST | Purpose |
 |---|---|---|
 | `get_my_mandate` | `GET /api/v1/mandate` | Limits, allergen rules, approvers — read first |
+| `get_customer_context` | — | Segment, stated priorities, rules, usual products, saved recipes, order templates |
+| `find_products` | — | Several ingredients at once → deterministic shortlist (≤7 each) with live price, packs, delivery, cut-off, CO₂, usual/substitute flags |
 | `search_products` | `POST /api/v1/products/search` | EN/FI full-text search with hard diet/allergen filters |
 | `get_product` | `GET /api/v1/products/{id}` | Ingredients, allergens, labels, pack size, substitutes |
 | `check_offers` | `POST /api/v1/offers` | Live price + availability for chosen products, in buyer units |
@@ -87,7 +91,7 @@ Evaluated by the gate on every order, independent of what the agent says.
 | Same products ordered in last 24 h push past the autonomous limit | APPROVAL | Stops order splitting |
 | Product contains / may contain an allergen the buyer must avoid | BLOCKED | Safety is absolute |
 | Product has no allergen declaration (strict buyers) | APPROVAL | Cannot verify safety automatically |
-| Supplier-warehouse stock (unknown quantity) | APPROVAL | Delivery not guaranteed |
+| Stock unknown (`availableAmount ≥ 999999`, typically supplier warehouse) | APPROVAL | Delivery not guaranteed |
 | Estimated delivery date after a passed cut-off | APPROVAL | Not confirmed by Valio |
 | Arrives after the requested date | APPROVAL | Buyer must accept the delay |
 | Substitute outside stated preferences | APPROVAL | Buyer's choice |
@@ -96,6 +100,30 @@ Evaluated by the gate on every order, independent of what the agent says.
 
 Each finding carries a rule id (machine-readable) and a sentence (human-readable). The approver
 sees the reasons next to the agent's own rationale.
+
+**Customer-confirmed carts (webshop).** When a person reviews a cart and confirms it, the delivery,
+substitution and price warnings they were shown count as accepted (recorded in the decision as
+"shown in the cart and accepted by …"). Spend rules, allergen rules and hard limits still apply: a
+head chef's cart above €1,500 still goes to the F&B manager; an allergen conflict is still blocked.
+Preferences edited in the webshop re-sign the mandate and are logged (`mandate.updated`).
+
+## 5b. The webshop channel: Aimo Assistant
+
+1. `get_customer_context` → the assistant knows priorities, recipes, history and templates.
+2. If something essential is missing (portions, date, a dietary need) it asks one tap-able question
+   (max two per conversation); otherwise it states its assumption.
+3. Recipes are scaled (saved recipe if one matches), then **one** `find_products` call narrows the
+   catalog deterministically; the AI chooses among the shortlist using the customer's own priorities.
+4. `show_cart` (UI tool): Valio prices every option for the line's quantity; priority 1 + up to two
+   alternatives with a one-line *why*; lines that depend on taste are marked "your choice".
+5. The customer confirms → signed quote → `place_order(confirmed_by=…)` → guardrails → signed order.
+6. Signals for Valio: `signal.substitution` (accepted substitute), `signal.preference` (alternative
+   chosen over the suggestion), `signal.unmet` (need nothing could meet in time), `signal.notify`
+   (back-in-stock request).
+
+Order templates (Valio's standing orders) are checked for the next delivery day: if everything is
+available and the customer allowed it, the order is confirmed automatically; otherwise substitutes are
+proposed for the missing items and the customer decides.
 
 ## 6. Response logic for exceptions
 
@@ -133,10 +161,11 @@ did external agents do in our systems?").
 | Now (hackathon) | Next |
 |---|---|
 | Buyer keys registered by seed script | Buyer onboarding in the webshop; keys via `did:web` |
-| Mandate issued by script | Mandate editor in the buyer's webshop account |
+| Mandate signed with a demo key on the server | Preferences editor exists; key moves to the customer's browser/passkey so Valio can't forge it |
 | Demo console without login | SSO for approvers; approvals also by email / Teams |
 | Order stored in the gate | Order handed to Valio's ERP; delivery status back to the agent |
 | SQLite state | Postgres; audit log anchored to an external timestamping service |
 | Estimated dates after cut-off | Availability API that returns the next feasible date |
-| Rule-based substitutes | Recipe-aware substitution and standing-order drift detection |
+| Synthetic purchase history and recipes | Real purchase history and My Aimo recipes / margin calculator |
+| Assistant only in the webshop | Same MCP tools exposed to customers' own agents (OAuth consent per mandate) |
 | Payment out of scope | Agentic payment standards (x402, AP2) for card-less B2B settlement |
