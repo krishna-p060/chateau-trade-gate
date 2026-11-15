@@ -111,7 +111,11 @@ _TYPE_MODIFIERS = {"coffee", "kahvi", "latte", "cappuccino", "mocca", "mocha", "
                    "ice", "jäätelö", "quark", "rahka", "yoghurt", "yogurt", "jogurtti", "cheese", "juusto",
                    "flavor", "flavour", "mint", "strawberry", "smoothie", "protein", "shake", "dessert",
                    "pudding", "vanukas", "sauce", "kastike", "soup", "keitto", "bar", "candy", "snack",
-                   "cake", "kakku", "pie", "piirakka", "mix", "seos", "spread", "levite"}
+                   "cake", "kakku", "pie", "piirakka", "mix", "seos", "spread", "levite",
+                   # measured by search_eval.py: snacks, ready meals and processed forms that share a word
+                   "chips", "sipsi", "crisps", "tortilla", "caramel", "karamelli", "jellies", "mashed", "muusi",
+                   "sose", "pizza", "salad", "salaatti", "pastasalad", "meal", "ateria", "ketchup", "ketsuppi",
+                   "marinated", "marinoitu", "dried", "kuivattu", "spreader", "brush"}
 
 
 def _type_penalty(words: list[str], name: str) -> int:
@@ -121,7 +125,28 @@ def _type_penalty(words: list[str], name: str) -> int:
 
 def _name_hits(words: list[str], name: str) -> int:
     n = name.lower()
-    return sum(1 for w in words if any(a in n for a in _SYNONYMS.get(w, [w])))
+    toks = set(re.findall(r"[\wåäöÅÄÖ]+", n))
+    # short words ("voi" = butter) must be whole words, or "voi" matches "Voima"
+    return sum(1 for w in words if any((a in toks) if len(a) <= 3 else (a in n) for a in _SYNONYMS.get(w, [w])))
+
+
+def _coherent(rows: list, nk) -> list:
+    """Category coherence: the strongest matches (every word in the name, no other-product word) mostly share
+    one product category; products from other categories that merely contain the word move down
+    ("milk" should not surface milk chocolate or a milk-based sauce)."""
+    if not rows:
+        return rows
+    best = nk(rows[0])
+    strong = [r for r in rows[:40] if nk(r) == best and best[1] == 0][:12]
+    counts: dict[str, int] = {}
+    for r in strong:
+        counts[r["category"]] = counts.get(r["category"], 0) + 1
+    if not counts:
+        return rows
+    top, n = max(counts.items(), key=lambda kv: kv[1])
+    if n < 2 or n < 0.4 * len(strong):
+        return rows
+    return sorted(rows, key=lambda r: (nk(r)[0], nk(r)[1] + (r["category"] != top), r["score"]))
 
 
 def _fts_query(text: str) -> str | None:
@@ -131,7 +156,7 @@ def _fts_query(text: str) -> str | None:
     groups = []
     for w in words:
         alts = _SYNONYMS.get(w, [w])
-        groups.append("(" + " OR ".join(f'"{a}"*' for a in alts) + ")")
+        groups.append("(" + " OR ".join(f'"{a}"' if len(a) <= 3 else f'"{a}"*' for a in alts) + ")")
     return " AND ".join(groups)
 
 
@@ -161,8 +186,11 @@ class Catalog:
 
     def search(self, query: str = "", *, diets: list[str] | None = None, avoid_allergens: list[str] | None = None,
                require_allergen_data: bool = False, labels: list[str] | None = None,
-               category: str | None = None, content_dim: str | None = None, limit: int = 25) -> list[Product]:
-        """Search the catalog. Hard filters are applied in Python after FTS for transparency."""
+               category: str | None = None, content_dim: str | None = None, limit: int = 25,
+               rank: str = "names") -> list[Product]:
+        """Search the catalog. Hard filters are applied in Python after FTS for transparency.
+        rank: "bm25" keyword score only; "names" products whose name carries the words first, other product types
+        demoted; "coherent" also keeps the product kind most strong matches share (search_eval.py measures all three)."""
         fq = _fts_query(query) if query else None
         if fq:
             rows = self.con.execute(
@@ -185,9 +213,13 @@ class Catalog:
         want_labels = set(labels or [])
 
         words = _query_words(query) if query else []
-        if words:  # products whose NAME carries the query words beat ingredient-only matches
-            rows = sorted(rows, key=lambda r: (-_name_hits(words, f"{r['name_en']} {r['name_fi']}"),
-                                               _type_penalty(words, f"{r['name_en']} {r['name_fi']}"), r["score"]))
+        if words and rank != "bm25":  # products whose NAME carries the query words beat ingredient-only matches
+            def nk(r):
+                n = f"{r['name_en']} {r['name_fi']}"
+                return -_name_hits(words, n), _type_penalty(words, n)
+            rows = sorted(rows, key=lambda r: (*nk(r), r["score"]))
+            if rank == "coherent":
+                rows = _coherent(rows, nk)
 
         out: list[Product] = []
         for r in rows:

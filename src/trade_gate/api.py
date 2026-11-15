@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from trade_gate.attacks import Attacks
-from trade_gate.config import ANTHROPIC_API_KEY, DEMO
+from trade_gate.config import ANTHROPIC_API_KEY, DEMO, ROOT
 from trade_gate.demo import DEMO_NOTE, open_gate
 from trade_gate.engine.planner import Need
 from trade_gate.mcp_server import _order_view, build_mcp
@@ -568,6 +568,14 @@ def s_recipe(sid: str, body: RecipeIn):
     """Scale a saved recipe and price it as a cart in plain code; needs no model."""
     from trade_gate.shop.recipe_cart import recipe_cart
     return recipe_cart(shop, sid, body.recipe_id, body.portions).snapshot()
+
+
+@app.get("/api/search-quality", tags=["demo"])
+def search_quality():
+    """Measured search quality (python -m trade_gate.search_eval): right product first on kitchen requests."""
+    import json as _json
+    f = ROOT / "docs" / "search-eval.json"
+    return _json.loads(f.read_text()) if f.exists() else {}
 
 
 @app.get("/api/demo/status", tags=["demo"])

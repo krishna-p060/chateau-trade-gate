@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, Braces, CheckCircle2, Clock, ExternalLink, FileSignature, KeyRound, Plug, ShieldCheck, XCircle } from 'lucide-react'
+import { ArrowRight, BarChart3, BookOpen, Braces, CheckCircle2, Clock, ExternalLink, FileSignature, KeyRound, Plug, ShieldCheck, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 import type { Manifest } from '../types'
@@ -6,7 +6,9 @@ import { Card, cx } from './ui'
 
 const MCP_TOOLS: [string, string][] = [
   ['get_my_mandate', 'What the buyer authorises: spend limits, allergen rules, approvers. Called first.'],
+  ['get_customer_context', 'Who the buyer is: priorities, saved recipes, usual products and order templates.'],
   ['search_products', 'Search the Valio Aimo catalog (English or Finnish) with diet, allergen, label and unit filters.'],
+  ['find_products', 'Shortlist several ingredients at once, with live price, availability and the customer’s usual products.'],
   ['get_product', 'Full static product details: ingredients, allergens, labels, pack size, substitutes.'],
   ['check_offers', 'Live Valio price and availability, converted into packs, cut-offs and delivery dates.'],
   ['plan_purchase', 'Turn a need into good / better / best options, split orders and ruled-out products with reasons.'],
@@ -26,6 +28,10 @@ export function InterfaceTab() {
   const [m, setM] = useState<Manifest | null>(null)
   const [keys, setKeys] = useState<Record<string, string>[]>([])
   const [err, setErr] = useState('')
+  const [sq, setSq] = useState<SearchQuality | null>(null)
+  useEffect(() => {
+    fetch('/api/search-quality').then((r) => r.json()).then((j) => setSq(j?.all ? j : null)).catch(() => {})
+  }, [])
   useEffect(() => {
     api.manifest().then(setM).catch((e) => setErr(e.message))
     api.jwks().then((j) => setKeys(Array.isArray(j?.keys) ? j.keys : [])).catch(() => {})
@@ -96,9 +102,11 @@ export function InterfaceTab() {
         </Card>
       </div>
 
+      {sq && <SearchQualityCard q={sq} />}
       <div className="mt-4 grid grid-cols-5 gap-4">
         <Card className="col-span-3 p-5">
           <Heading icon={<Plug className="h-4 w-4" />}>MCP tools for purchasing agents</Heading>
+          <p className="-mt-1 mb-2 text-[12.5px] text-slate-500">The Aimo Assistant’s AI calls these same tools over MCP, with the customer’s signed mandate as its token; the order it prepares passes the same gate checks.</p>
           <ul className="divide-y divide-slate-100">
             {MCP_TOOLS.map(([name, desc]) => (
               <li key={name} className="flex gap-4 py-2">
@@ -133,6 +141,46 @@ export function InterfaceTab() {
         </div>
       </div>
     </div>
+  )
+}
+
+interface SearchRow { top1_pct: number; top3_pct: number; top1: number; cases: number }
+interface SearchQuality {
+  catalog_size: number
+  sets: Record<string, Record<string, { top1_pct: number } | number>>
+  all: Record<string, SearchRow>
+  labels: Record<string, string>
+  before_main_3fac816_top1_pct: { all: number }
+}
+
+function SearchQualityCard({ q }: { q: SearchQuality }) {
+  const ours = q.all.names, kw = q.all.bm25
+  const held = q.sets.held_out as Record<string, { top1_pct: number } | number>
+  const heldN = held.cases as number
+  const heldOurs = (held.names as { top1_pct: number }).top1_pct
+  const rows: [string, number, string][] = [
+    [q.labels.bm25, kw.top1_pct, 'bg-slate-300'],
+    ['Before this change', q.before_main_3fac816_top1_pct.all, 'bg-slate-400'],
+    [q.labels.names, ours.top1_pct, 'bg-emerald-500'],
+  ]
+  return (
+    <Card className="mt-4 p-5">
+      <Heading icon={<BarChart3 className="h-4 w-4" />}>Search quality, measured</Heading>
+      <p className="-mt-1 mb-3 text-[12.5px] text-slate-500">
+        Right product first on {ours.cases} kitchen requests in English and Finnish, over all {q.catalog_size.toLocaleString('en')} products.
+        {' '}{heldN} of them were written before tuning and never tuned on: {heldOurs}% there. Run it: <code className="rounded bg-slate-100 px-1 font-mono text-[11.5px]">uv run python -m trade_gate.search_eval</code>
+      </p>
+      <div className="space-y-2">
+        {rows.map(([label, pct, color]) => (
+          <div key={label} className="flex items-center gap-3 text-[12.5px]">
+            <span className="w-[26rem] shrink-0 truncate text-slate-600" title={label}>{label}</span>
+            <div className="h-3 flex-1 rounded-full bg-slate-100"><div className={cx('h-3 rounded-full', color)} style={{ width: `${pct}%` }} /></div>
+            <span className="w-12 shrink-0 text-right font-semibold tabular-nums text-slate-900">{pct}%</span>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[12px] text-slate-500">In the top 3: {ours.top3_pct}% (keyword search {kw.top3_pct}%). Tried and rejected: keeping only the category most matches share scored lower on the held-out requests.</p>
+    </Card>
   )
 }
 
