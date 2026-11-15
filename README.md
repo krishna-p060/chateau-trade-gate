@@ -30,7 +30,8 @@ uv sync && uv run python -m trade_gate.walkthrough    # the cart above, the elev
 What is not here:
 
 - Other entries to this challenge are hosted with no setup, publish evaluation tables over several
-  models, or turn a menu photo into an order. This one does none of that. Signed quotes, rules in code,
+  models, or turn a menu photo into an order. This one measures its product search (below) but is not
+  hosted and takes no photos. Signed quotes, rules in code,
   human approval and a hash-chained log are here as in most of them.
 - Valio's mock has no order API, so an order ends signed at the gate; the signed confirmation says so.
 - No login, and the buyer's signing key sits on the server in this prototype.
@@ -38,6 +39,35 @@ What is not here:
   preferred, demand nothing could meet).
 - Without keys you see the gate and the plain-code cart, not the model, which needs an Anthropic key.
 - The demo kitchens' purchase history and recipes are synthetic.
+
+## Search, measured
+
+Product search is plain code over Valio's full catalog; the AI only chooses among what it returns.
+`uv run python -m trade_gate.search_eval` runs 66 kitchen requests in English and Finnish ("lactose-free
+milk", "voi", "penne pasta", "canned tuna", "perunat" …) against all 17,546 products. Each request says
+what counts as the right product as a rule (name pattern, words that make it a different product such as
+*chocolate* milk or *mashed* potatoes, a required diet claim), not as a hand-picked product id.
+
+| Ranking | Right product first | In the top 3 |
+|---|---|---|
+| Keyword search only (SQLite FTS5, BM25) | 82% | 91% |
+| Before this change (`main` at 3fac816) | 88% | 95% |
+| **Aimo search**: name match first, other product kinds demoted, Finnish/English synonyms | **94%** | **97%** |
+
+16 of the 66 requests were written before tuning and never tuned on; on those the score is 88%, the same
+as before the change, so most of the gain is on requests we tuned on. Tried and rejected: keeping only the
+category most matches share (91% overall, 75% on the held-out requests). The same numbers are on the
+console's *Open interface* tab and in `docs/search-eval.json`.
+
+## Judging criteria: where to see each one
+
+| Criterion | Where to see it |
+|---|---|
+| End-to-end demo (request → lookup → order / approval) | Webshop *Assistant* tab: request → ingredient list → products → confirm → signed order; or `uv run python -m trade_gate.walkthrough` with no keys |
+| Solving the need precisely | Saved recipe scaled per portion, the kitchen's usual products tagged, cost per portion on the cart; search measured above |
+| Autonomy and controls | *Preferences* = the signed mandate; *Approvals* tab; history guardrails (price rise, unusual quantity, split orders, weekly budget); *Try to break it*: 10 of 11 stopped, the 11th stated |
+| Robustness to exceptions | The walkthrough's exception cases (cut-off passed, partial or unknown stock, not deliverable, missing allergen data, substitutes); a Valio outage returns "nothing was ordered" |
+| Openness and path to production | MCP + OpenAPI 3.1 with the same tools, `/.well-known/trade-gate.json`, JWKS, Ed25519-signed quotes and confirmations, hash-chained audit log with a verify button (console) |
 
 ## Try to break it
 

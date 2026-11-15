@@ -104,7 +104,8 @@ def test_settings_that_would_protect_nothing_or_exceed_the_hard_limit_are_not_sa
     from trade_gate.seed import load_mandate
     gate.tokens[H] = load_mandate(H, gate.state_dir)
     fish = next((p for p in catalog.search("salmon", limit=40) if "AF" in p.allergens_contains), None)
-    assert fish is None or order(gate, H, HA, [{"product_id": fish.id, "units": 1}])["status"] == "REJECTED"
+    lot = max(1, int(fish.allowed_lot_size or 1)) if fish else 1  # some fish is sold only in multiples of 2
+    assert fish is None or order(gate, H, HA, [{"product_id": fish.id, "units": lot}])["status"] == "REJECTED"
     assert gate.buyer(B)["mandate"]["limits"]["auto_approve_max_order_eur"] == 1500
 
 

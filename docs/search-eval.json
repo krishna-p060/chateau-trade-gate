@@ -1,0 +1,80 @@
+{
+ "catalog_size": 17546,
+ "sets": {
+  "tuning": {
+   "cases": 50,
+   "bm25": {
+    "top1": 41,
+    "top3": 46,
+    "top1_pct": 82,
+    "top3_pct": 92
+   },
+   "names": {
+    "top1": 48,
+    "top3": 49,
+    "top1_pct": 96,
+    "top3_pct": 98
+   },
+   "coherent": {
+    "top1": 48,
+    "top3": 49,
+    "top1_pct": 96,
+    "top3_pct": 98
+   }
+  },
+  "held_out": {
+   "cases": 16,
+   "bm25": {
+    "top1": 13,
+    "top3": 14,
+    "top1_pct": 81,
+    "top3_pct": 88
+   },
+   "names": {
+    "top1": 14,
+    "top3": 15,
+    "top1_pct": 88,
+    "top3_pct": 94
+   },
+   "coherent": {
+    "top1": 12,
+    "top3": 13,
+    "top1_pct": 75,
+    "top3_pct": 81
+   }
+  }
+ },
+ "labels": {
+  "bm25": "Keyword search only (SQLite FTS5, BM25)",
+  "names": "Aimo search: name match first, other product kinds demoted, Finnish/English synonyms",
+  "coherent": "Tried and rejected: also keep the category most matches share"
+ },
+ "before_main_3fac816_top1_pct": {
+  "tuning": 88,
+  "held_out": 88,
+  "all": 88
+ },
+ "all": {
+  "bm25": {
+   "top1": 54,
+   "top3": 60,
+   "cases": 66,
+   "top1_pct": 82,
+   "top3_pct": 91
+  },
+  "names": {
+   "top1": 62,
+   "top3": 64,
+   "cases": 66,
+   "top1_pct": 94,
+   "top3_pct": 97
+  },
+  "coherent": {
+   "top1": 60,
+   "top3": 62,
+   "cases": 66,
+   "top1_pct": 91,
+   "top3_pct": 94
+  }
+ }
+}
