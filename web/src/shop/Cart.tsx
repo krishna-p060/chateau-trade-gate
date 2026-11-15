@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, Bell, BookmarkPlus, Check, CheckCircle2, ChevronDown, Clock, Plus, ShieldCheck, Tag, Trash2, X, XCircle,
+  AlertTriangle, Bell, BookmarkPlus, Check, CheckCircle2, ChevronDown, Clock, Plus, ShieldCheck, Star, Tag, Trash2, X, XCircle,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Spinner } from '../components/ToolSteps'
@@ -9,6 +9,15 @@ import { fDay as day, fEur as eur, fNum as num, fPricePer, noteTexts, pname, t, 
 import type { Cart as CartT, Check as CheckT, Line, OrderInfo, Option, Plan } from './types'
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+
+/** Highlighted tag for the product this customer usually buys, so it stands out while choosing. */
+function UsualTag() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-yellow-100 px-2 py-px text-[11px] font-semibold text-yellow-900 ring-1 ring-inset ring-yellow-300">
+      <Star className="h-3 w-3 fill-yellow-400 text-yellow-500" />{t('your_usual')}
+    </span>
+  )
+}
 
 export interface CartActions {
   onSelect: (key: string, option: number) => Promise<void>
@@ -149,7 +158,7 @@ function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartAction
         {sel && (
           <div className="mt-1 flex items-center gap-2.5">
             <Status o={sel} />
-            {sel.usual && <span className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-px text-[11px] font-medium text-emerald-700">{t('your_usual')}</span>}
+            {sel.usual && <UsualTag />}
             {sel.why && <span className="min-w-0 flex-1 truncate text-[12px] text-slate-400" title={sel.why}>{sel.why}</span>}
             {!sel.why && <span className="flex-1" />}
             {!readOnly && opts.length > 1 && (
@@ -184,7 +193,10 @@ function LineRow({ line, actions, readOnly }: { line: Line; actions?: CartAction
                   {pending === i ? <Spinner className="h-2.5 w-2.5" /> : on ? <Check className="h-3 w-3" strokeWidth={3} /> : i + 1}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[13px] font-medium text-slate-800">{pname(o)}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="truncate text-[13px] font-medium text-slate-800">{pname(o)}</span>
+                    {o.usual && <UsualTag />}
+                  </span>
                   <span className="block truncate text-[12px] text-slate-500">{qtyText(o)}{o.why ? ` · ${o.why}` : ''}</span>
                 </span>
                 <span className="shrink-0 text-right">

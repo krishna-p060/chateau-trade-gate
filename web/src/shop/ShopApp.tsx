@@ -96,6 +96,8 @@ export default function ShopApp() {
     if (s.id === sidRef.current) setSession(s)
   }, [])
   const session = rawSession && rawSession.customer_id === activeCid ? rawSession : null
+  // each signed-in customer sees only the orders waiting on their own approver
+  const myApprovals = approvals.filter((x) => x.buyer_id === activeCid)
   useEffect(() => {
     let alive = true
     localStorage.setItem('aimo.customer', activeCid)
@@ -226,7 +228,7 @@ export default function ShopApp() {
 
   return (
     <div className="flex h-full flex-col bg-[#f5f7fb] text-slate-800">
-      <Header tab={tab} setTab={setTab} pending={approvals.length} customers={customers} customer={customer} onCustomer={setCid}
+      <Header tab={tab} setTab={setTab} pending={myApprovals.length} customers={customers} customer={customer} onCustomer={setCid}
         lang={lang} onLang={switchLang} />
       <main className="min-h-0 flex-1">
         {tab === 'assistant' && (
@@ -243,7 +245,7 @@ export default function ShopApp() {
             </section>
           </div>
         )}
-        {tab === 'approvals' && <div className="h-full overflow-y-auto"><Approvals approvals={approvals} customers={customers} onDecide={decide} /></div>}
+        {tab === 'approvals' && <div className="h-full overflow-y-auto"><Approvals approvals={myApprovals} customers={customers} onDecide={decide} /></div>}
         {tab === 'valio' && <div className="h-full overflow-y-auto"><ValioView customers={customers} /></div>}
         {tab === 'preferences' && customer && (
           <div className="h-full overflow-y-auto"><Preferences key={customer.id} customer={customer} onSave={saveSettings} /></div>
