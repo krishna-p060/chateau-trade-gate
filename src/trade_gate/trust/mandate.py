@@ -20,6 +20,7 @@ class Limits:
     hard_max_order_eur: float = 20000.0          # never, even with approval
     weekly_budget_eur: float = 15000.0           # approval needed once weekly spend would exceed
     max_unit_price_increase_pct: float = 15.0    # vs the buyer's reference price -> approval
+    unusual_quantity_factor: float = 5.0
 
 
 @dataclass

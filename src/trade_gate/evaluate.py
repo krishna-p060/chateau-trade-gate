@@ -25,6 +25,7 @@ from trade_gate.agent.buyer_agent import run_agent
 from trade_gate.catalog.codes import expand_allergen, resolve_allergen
 from trade_gate.catalog.store import DIET_CLAIMS, Catalog
 from trade_gate.config import ROOT
+from trade_gate.demo import open_catalog
 from trade_gate.engine.offers import TZ
 from trade_gate.scenarios import SCENARIOS
 from trade_gate.seed import load_mandate
@@ -80,7 +81,7 @@ def check(scenario: dict, orders: list[dict], catalog: Catalog) -> list[tuple[st
 
 
 async def evaluate(ids: list[str]) -> dict:
-    catalog = Catalog()
+    catalog = open_catalog()
     results = []
     async with httpx.AsyncClient(timeout=30) as http:
         for s in SCENARIOS:

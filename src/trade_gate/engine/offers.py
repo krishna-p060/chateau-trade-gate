@@ -141,7 +141,12 @@ def build_offer(p: Product, price: dict | None, avail: dict | None, *, need_qty:
                     o.add("CONTENT_MISMATCH", "info",
                           f"Pack content from product name ({p.content_per_sales_unit:g} {dim}) differs from "
                           f"Valio's unit price ({verified:g} {dim}); using Valio's figure.")
-            o.content_per_sales_unit, o.content_dim, o.content_source = verified, dim, "valio_unit_price"
+                    o.content_per_sales_unit, o.content_dim, o.content_source = verified, dim, "valio_unit_price"
+                else:
+                    o.content_per_sales_unit, o.content_dim, o.content_source = (
+                        p.content_per_sales_unit, dim, "catalog_verified")
+            else:
+                o.content_per_sales_unit, o.content_dim, o.content_source = verified, dim, "valio_unit_price"
 
     # ---------------------------------------------------------------- availability
     if not avail:

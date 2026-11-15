@@ -5,10 +5,10 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import date, datetime, timedelta
+from types import SimpleNamespace
 
 import pytest
 
-from trade_gate.catalog.store import Catalog
 from trade_gate.engine.offers import TZ, build_offer
 from trade_gate.engine.planner import Need, plan
 from trade_gate.service import GateError, TradeGate
@@ -51,9 +51,25 @@ class FakeValio:
         return out
 
 
-@pytest.fixture(scope="module")
-def catalog():
-    return Catalog()
+class FrozenClock(datetime):
+    @classmethod
+    def now(cls, tz=None):
+        return NOW.astimezone(tz) if tz else NOW.replace(tzinfo=None)
+
+
+@pytest.fixture(autouse=True)
+def frozen_clock(monkeypatch):
+    """The gate, the planner and signature checks all read NOW, so FakeValio's fixed cut-offs hold on any day."""
+    import jwt.api_jwt
+
+    from trade_gate import service
+    from trade_gate.engine import offers, planner
+    from trade_gate.shop import assistant
+    from trade_gate.trust import audit, mandate
+
+    for module in (service, offers, planner, assistant, audit, jwt.api_jwt):
+        monkeypatch.setattr(module, "datetime", FrozenClock)
+    monkeypatch.setattr(mandate, "time", SimpleNamespace(time=NOW.timestamp))
 
 
 @pytest.fixture()
@@ -81,8 +97,12 @@ def test_terminal_cutoff_passed_is_flagged_and_late(catalog):
                     need_qty=1000, need_dim="l", deliver_by=MON, now=NOW)
     codes = {i.code for i in o.issues}
     assert {"STOCK_UNCONFIRMED", "CUTOFF_PASSED", "LATE"} <= codes
-    assert o.content_per_sales_unit == pytest.approx(19.94, abs=0.1)  # verified from Valio unit price (2 x 10 L)
-    assert o.units_to_order == 51 and not o.meets_deadline
+    if p.content_per_sales_unit == 20:
+        assert o.content_per_sales_unit == 20 and o.content_source == "catalog_verified"
+        assert o.units_to_order == 50
+    else:
+        assert o.content_per_sales_unit == pytest.approx(19.94, abs=0.1) and o.units_to_order == 51
+    assert not o.meets_deadline
 
 
 def test_plan_uses_two_batched_calls_and_explains_rejections(catalog):

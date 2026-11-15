@@ -57,6 +57,11 @@ ALLERGEN_ALIASES: dict[str, str] = {
     "shellfish": "AC",
     "sulphur dioxide": "AU",
     "sulfites": "AU",
+    "pähkinät": "AN", "pähkinä": "AN", "maapähkinät": "AP", "maapähkinä": "AP", "seesami": "AS",
+    "maito": "AM", "laktoosi": "ML", "kananmuna": "AE", "muna": "AE", "kala": "AF", "äyriäiset": "AC",
+    "nilviäiset": "UM", "soija": "AY", "selleri": "BC", "sinappi": "BM", "lupiini": "NL", "sulfiitit": "AU",
+    "gluteeni": "AW", "vehnä": "UW", "ruis": "NR", "ohra": "GB", "kaura": "GO", "manteli": "SA",
+    "hasselpähkinä": "SH", "saksanpähkinä": "SW", "cashewpähkinä": "SC", "pistaasi": "ST",
 }
 
 LABELS: dict[str, str] = {

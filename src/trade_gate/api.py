@@ -18,19 +18,23 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from trade_gate.attacks import Attacks
+from trade_gate.config import ANTHROPIC_API_KEY, DEMO
+from trade_gate.demo import DEMO_NOTE, open_gate
 from trade_gate.engine.planner import Need
 from trade_gate.mcp_server import _order_view, build_mcp
 from trade_gate.seed import seed
-from trade_gate.service import GateError, TradeGate
+from trade_gate.service import GateError
 from trade_gate.trust.mandate import Mandate
-from trade_gate.valio_client import ValioClient
+from trade_gate.valio_client import ValioAPIError
 
-gate = TradeGate(ValioClient())
+gate = open_gate()
 seed(gate)
 mcp = build_mcp(gate)
 mcp_app = mcp.streamable_http_app(streamable_http_path="/", stateless_http=True, json_response=True)
@@ -69,6 +73,14 @@ async def _gate_error(_req: Request, e: GateError):
     return JSONResponse({"error": e.code, "message": e.message}, status_code=e.status)
 
 
+@app.exception_handler(ValioAPIError)
+@app.exception_handler(httpx.HTTPError)
+async def _valio_error(_req: Request, e: Exception):
+    return JSONResponse({"error": "VALIO_UNAVAILABLE", "message": "Valio's price and availability service did "
+                         f"not answer ({type(e).__name__}); nothing was ordered. Try again in a moment."},
+                        status_code=503)
+
+
 def agent(authorization: str = Header(default="")) -> tuple[Mandate, str]:
     token = authorization.split(" ", 1)[1] if authorization.lower().startswith("bearer ") else None
     return gate.authenticate(token), token
@@ -82,7 +94,7 @@ def jwks():
 
 @app.get("/.well-known/trade-gate.json", tags=["trust"])
 def manifest(request: Request):
-    return gate.manifest(str(request.base_url).rstrip("/"))
+    return gate.manifest(str(request.base_url).rstrip("/")) | ({"demo": DEMO_NOTE} if DEMO else {})
 
 
 # ------------------------------------------------------------------ agent REST API
@@ -212,13 +224,15 @@ def c_approvals(buyer_id: str | None = None, status: str | None = "PENDING"):
 
 @app.post("/api/console/approvals/{aid}", tags=["console"])
 def c_decide(aid: str, body: DecisionIn):
-    o = gate.decide(aid, body.approver, body.approve, body.note)
-    for sess in shop.sessions.values():  # tell the webshop session that ordered it
-        if sess.order and sess.order.get("order_id") == o["id"]:
-            shop.refresh_order(sess)
-            if _loop:
-                _loop.call_soon_threadsafe(shop._notify, sess)
-    return o
+    try:
+        return gate.decide(aid, body.approver, body.approve, body.note)
+    finally:
+        pending = {a["order_id"] for a in gate.approvals(status="PENDING")}
+        for sess in shop.sessions.values():
+            if sess.order and sess.order.get("status") == "PENDING_APPROVAL" and sess.order["order_id"] not in pending:
+                shop.refresh_order(sess)
+                if _loop:
+                    _loop.call_soon_threadsafe(shop._notify, sess)
 
 
 @app.get("/api/console/orders", tags=["console"])
@@ -300,7 +314,7 @@ async def c_agent_run(body: AgentRunIn):
 
     async def go():
         try:
-            res = await run_agent(body.request, load_mandate(b["id"]), buyer_name=b["name"], sink=sink,
+            res = await run_agent(body.request, load_mandate(b["id"], gate.state_dir), buyer_name=b["name"], sink=sink,
                                   wait_for_approval_s=body.wait_for_approval_s)
             _runs[run_id].update(status="done", final=res["final"])
         except Exception as e:  # surface failures in the UI instead of dying silently
@@ -539,6 +553,37 @@ def s_settings(cid: str, body: SettingsIn, lang: str = "en"):
 def s_insights():
     """Valio Aimo's view: orders from the assistant, substitution and preference signals, audit integrity."""
     return gate.insights()
+
+
+attacks = Attacks(gate.valio, gate.catalog)
+
+
+class RecipeIn(BaseModel):
+    recipe_id: str
+    portions: int
+
+
+@app.post("/api/shop/sessions/{sid}/recipe", tags=["shop"])
+def s_recipe(sid: str, body: RecipeIn):
+    """Scale a saved recipe and price it as a cart in plain code; needs no model."""
+    from trade_gate.shop.recipe_cart import recipe_cart
+    return recipe_cart(shop, sid, body.recipe_id, body.portions).snapshot()
+
+
+@app.get("/api/demo/status", tags=["demo"])
+def d_status():
+    return {"demo": DEMO, "llm": bool(ANTHROPIC_API_KEY), "note": DEMO_NOTE if DEMO else ""}
+
+
+@app.get("/api/demo/attacks", tags=["demo"])
+def d_attacks():
+    return attacks.listing()
+
+
+@app.post("/api/demo/attacks/{attempt_id}", tags=["demo"])
+def d_attack(attempt_id: str):
+    """Run one attempt to get an order past the gate, on a scratch gate with its own order book."""
+    return attacks.run(attempt_id)
 
 
 # ------------------------------------------------------------------ dashboard (static build, if present)

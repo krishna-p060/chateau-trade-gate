@@ -94,6 +94,11 @@ class ValioClient:
         return out
 
     # ------------------------------------------------------------------ public
+    def forget(self, path: str, products: list[str], requested: date) -> None:
+        """Drop cached answers so the next call for these products reads Valio again."""
+        for pid in products:
+            self._cache.store.pop((path, pid, requested), None)
+
     def ping(self) -> bool:
         return self._http.get("/ping").status_code == 200
 
